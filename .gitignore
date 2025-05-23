@@ -1,0 +1,9 @@
+*.code-workspace
+
+scratch/
+!scratch/.gitkeep
+
+out/
+!out/.gitkeep
+
+venv/
