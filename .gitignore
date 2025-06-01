@@ -1,9 +1,11 @@
 *.code-workspace
+*.pyc
 
 scratch/
 !scratch/.gitkeep
 
-out/
+out/*
 !out/.gitkeep
 
 venv/
+
