@@ -1,8 +1,8 @@
 import pystac_client
 import planetary_computer
-from  eo.utils import set_up_dask
+import geopandas as gpd
+import rioxarray
 
-set_up_dask(enabled=True)
 
 class BaseImage:
     def __init__(self, start_date, end_date, lat, lon, collection):
@@ -31,16 +31,29 @@ class BaseImage:
             datetime=date_range
         )
 
-        return search.item_collection()
+        search_results = search.item_collection()
 
-    def get_image(self):
-        pass
+        return search_results
+    
 
-    def get_rgb_bands(self):
-        pass
+    def get_image(self, image_selection):
+        selected_image = min(image_selection, key=lambda item: item.properties["eo:cloud_cover"])
 
-    def convert_to_arrays(self):
-        pass
+        return selected_image
+    
+
+    def get_individual_bands(self, image, band_nums:dict, subset=False):
+        assets = image.assets
+
+        bands = {
+            name: rioxarray.open_rasterio(url.href, chunks=True)
+            for name, band_num in band_nums.items()
+            for band, url in assets.items()
+            if band_num == band
+        }
+
+        return bands
+    
 
     def stretch_contrast(self):
         pass
