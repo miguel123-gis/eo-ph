@@ -1,27 +1,8 @@
 import pystac_client
 import planetary_computer
-import geopandas
-import rioxarray
-import xarray as xr
-from dask_gateway import Gateway
-from dask.distributed import Client, LocalCluster, Lock
-import numpy as np
-from rioxarray.merge import merge_arrays
-import matplotlib.pyplot as plt
-from rasterio.enums import ColorInterp
+from  eo.utils import set_up_dask
 
-
-# Set up dask
-gateway = Gateway("http://127.0.0.1:8000")
-gateway.list_clusters()
-
-# Create a cluster
-cluster = gateway.new_cluster()
-cluster.scale(4)
-
-# Autoscale the clusters
-client = cluster.get_client()
-cluster.adapt(minimum=4, maximum=50)
+set_up_dask(enabled=True)
 
 class BaseImage:
     def __init__(self, start_date, end_date, lat, lon, collection):
@@ -33,7 +14,24 @@ class BaseImage:
 
 
     def search_collection(self):
-        pass
+        date_range = f'{self.start_date}/{self.end_date}'
+        xy = {
+            'type': 'Point',
+            'coordinates': [self.lon, self.lat]
+        }
+
+        catalog = pystac_client.Client.open(
+            "https://planetarycomputer.microsoft.com/api/stac/v1",
+            modifier=planetary_computer.sign_inplace
+        )
+
+        search = catalog.search(
+            collections=[self.collection],
+            intersects=xy,
+            datetime=date_range
+        )
+
+        return search.item_collection()
 
     def get_image(self):
         pass
