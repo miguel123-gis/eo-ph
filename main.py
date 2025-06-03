@@ -1,5 +1,5 @@
 from eo.base_image_collection import BaseImageCollection
-from eo.image_utils import search_collection, get_image, get_individual_bands
+from eo.image_utils import search_catalog, get_best_image, get_individual_bands
 from eo.utils import set_up_dask
 
 BANDS_SELECTION = {
@@ -19,6 +19,6 @@ if __name__ == "__main__":
         collection = 'sentinel-2-l2a'
     )
 
-    image_results = search_collection(image_collection)
-    best_image = get_image(image_results)
+    image_results = search_catalog(image_collection)
+    best_image = get_best_image(image_results)
     rgb_bands = get_individual_bands(best_image, BANDS_SELECTION)
