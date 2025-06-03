@@ -28,5 +28,5 @@ if __name__ == "__main__":
         subset=slice(5000,6000)
     )
 
-    image = BaseImage(rgb_bands)
-    stretched = image.stretch_contrast(lower=2, upper=98, nodataval=0)
+    image = BaseImage(bands=rgb_bands, lower=2, upper=98, no_data_value=0)
+    stretched = image.stretch_contrast()
