@@ -52,6 +52,14 @@ class BaseImage:
             if band_num == band
         }
 
+        if subset:
+            bands_subset = {
+                name: band.isel(x=subset, y=subset)
+                for name, band in bands.items()
+            }
+
+            return bands_subset
+
         return bands
     
 
