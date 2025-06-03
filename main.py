@@ -28,5 +28,11 @@ if __name__ == "__main__":
         subset=slice(5000,6000)
     )
 
-    image = BaseImage(bands=rgb_bands, lower=2, upper=98, no_data_value=0)
-    stretched = image.stretch_contrast()
+    image = (
+        BaseImage(bands=rgb_bands, lower=2, upper=98, no_data_value=0)
+        .plot_histogram_with_percentiles()
+        .stretch_contrast()
+        .stack_bands(['red', 'green', 'blue'])
+    )
+
+    rgb = image.get_rgb_stack()

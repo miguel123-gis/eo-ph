@@ -1,5 +1,5 @@
 import xarray as xr
-from typing import Dict
+from typing import Dict, List
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -55,13 +55,34 @@ class BaseImage:
                 self.lower_percentile, self.upper_percentile, figsize=(8,4),
                 out_file=f"data/misc/{name}_{self.lower_percentile}_{self.upper_percentile}.png"
                 )
+            
+        return self
     
     
-    def stretch_contrast(self) -> Dict:
+    def stretch_contrast(self) -> "BaseImage":
         """Removes the outliers in a band and stretch the remaining values to increase contrast"""
-        stretched = {
+        self.bands = {
             name: self._stretch_contrast(band, self.lower_percentile, self.upper_percentile, self.no_data_value)
             for name, band in self.bands.items()
         }
 
-        return stretched
+        return self
+    
+
+    def stack_bands(self, band_order:List) -> "BaseImage":
+        try:
+            bands_to_stack = [self.bands[band] for band in band_order]
+        except KeyError as e:
+            raise ValueError(f"Band {e} not found in provided bands.") from e
+        
+        self._rgb_stack = xr.concat(bands_to_stack, dim='band')
+        self._rgb_stack['band'] = band_order
+
+        return self
+    
+
+    def get_rgb_stack(self) -> xr.DataArray:
+        if self._rgb_stack is None:
+            raise ValueError('No RGB stack. Use stack_bands() first.')
+        
+        return self._rgb_stack
