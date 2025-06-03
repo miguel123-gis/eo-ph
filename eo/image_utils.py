@@ -1,10 +1,14 @@
+import pystac
+import pystac.item
+import pystac.item_collection
 import pystac_client
 import planetary_computer
 import geopandas as gpd
 import rioxarray
 from eo.base_image_collection import BaseImageCollection
 
-def search_collection(imgcol: BaseImageCollection):
+def search_catalog(imgcol: BaseImageCollection) -> pystac.item_collection.ItemCollection:
+    """Search a collection e.g. Sentintel 2 based on XY and date range."""
     date_range = f'{imgcol.start_date}/{imgcol.end_date}'
     xy = {
         'type': 'Point',
@@ -27,13 +31,15 @@ def search_collection(imgcol: BaseImageCollection):
     return search_results
     
 
-def get_best_image(image_selection):
+def get_best_image(image_selection) -> pystac.item.Item:
+    """Selects the image with the lowest cloud cover from the image collection."""
     best_image = min(image_selection, key=lambda item: item.properties["eo:cloud_cover"])
 
     return best_image
 
 
-def get_individual_bands(image, band_nums:dict, subset=False):
+def get_individual_bands(image, band_nums:dict, subset=False) -> dict:
+    """Get the individual bands (e.g. Red, Green, and Blue) from the selected image."""
     assets = image.assets
 
     bands = {
