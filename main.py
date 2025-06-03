@@ -1,4 +1,5 @@
 from eo.base_image_collection import BaseImageCollection
+from eo.base_image import BaseImage
 from eo.image_utils import search_catalog, get_best_image, get_individual_bands
 from eo.utils import set_up_dask
 
@@ -21,4 +22,11 @@ if __name__ == "__main__":
 
     image_results = search_catalog(image_collection)
     best_image = get_best_image(image_results)
-    rgb_bands = get_individual_bands(best_image, BANDS_SELECTION)
+    rgb_bands = get_individual_bands(
+        best_image, 
+        BANDS_SELECTION,
+        subset=slice(5000,6000)
+    )
+
+    image = BaseImage(rgb_bands)
+    stretched = image.stretch_contrast(lower=2, upper=98, nodataval=0)
