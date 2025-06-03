@@ -1,27 +1,8 @@
 import pystac_client
 import planetary_computer
-import geopandas
+import geopandas as gpd
 import rioxarray
-import xarray as xr
-from dask_gateway import Gateway
-from dask.distributed import Client, LocalCluster, Lock
-import numpy as np
-from rioxarray.merge import merge_arrays
-import matplotlib.pyplot as plt
-from rasterio.enums import ColorInterp
 
-
-# Set up dask
-gateway = Gateway("http://127.0.0.1:8000")
-gateway.list_clusters()
-
-# Create a cluster
-cluster = gateway.new_cluster()
-cluster.scale(4)
-
-# Autoscale the clusters
-client = cluster.get_client()
-cluster.adapt(minimum=4, maximum=50)
 
 class BaseImage:
     def __init__(self, start_date, end_date, lat, lon, collection):
@@ -33,16 +14,54 @@ class BaseImage:
 
 
     def search_collection(self):
-        pass
+        date_range = f'{self.start_date}/{self.end_date}'
+        xy = {
+            'type': 'Point',
+            'coordinates': [self.lon, self.lat]
+        }
 
-    def get_image(self):
-        pass
+        catalog = pystac_client.Client.open(
+            "https://planetarycomputer.microsoft.com/api/stac/v1",
+            modifier=planetary_computer.sign_inplace
+        )
 
-    def get_rgb_bands(self):
-        pass
+        search = catalog.search(
+            collections=[self.collection],
+            intersects=xy,
+            datetime=date_range
+        )
 
-    def convert_to_arrays(self):
-        pass
+        search_results = search.item_collection()
+
+        return search_results
+    
+
+    def get_image(self, image_selection):
+        selected_image = min(image_selection, key=lambda item: item.properties["eo:cloud_cover"])
+
+        return selected_image
+    
+
+    def get_individual_bands(self, image, band_nums:dict, subset=False):
+        assets = image.assets
+
+        bands = {
+            name: rioxarray.open_rasterio(url.href, chunks=True)
+            for name, band_num in band_nums.items()
+            for band, url in assets.items()
+            if band_num == band
+        }
+
+        if subset:
+            bands_subset = {
+                name: band.isel(x=subset, y=subset)
+                for name, band in bands.items()
+            }
+
+            return bands_subset
+
+        return bands
+    
 
     def stretch_contrast(self):
         pass
