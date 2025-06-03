@@ -1,4 +1,5 @@
-from eo.base_image import BaseImage
+from eo.base_image_collection import BaseImageCollection
+from eo.image_utils import search_collection, get_image, get_individual_bands
 from eo.utils import set_up_dask
 
 BANDS_SELECTION = {
@@ -10,7 +11,7 @@ BANDS_SELECTION = {
 if __name__ == "__main__":
     set_up_dask(enabled=True)
 
-    image = BaseImage(
+    image_collection = BaseImageCollection(
         start_date = '2025-04-01',
         end_date = '2025-04-30',
         lon = 123.30178949703331,
@@ -18,6 +19,6 @@ if __name__ == "__main__":
         collection = 'sentinel-2-l2a'
     )
 
-    image_collection = image.search_collection()
-    best_image = image.get_image(image_collection)
-    rgb_bands = image.get_individual_bands(best_image, BANDS_SELECTION)
+    image_results = search_collection(image_collection)
+    best_image = get_image(image_results)
+    rgb_bands = get_individual_bands(best_image, BANDS_SELECTION)
