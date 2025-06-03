@@ -5,6 +5,7 @@ import pystac_client
 import planetary_computer
 import geopandas as gpd
 import rioxarray
+from typing import Dict, Union
 from eo.base_image_collection import BaseImageCollection
 
 def search_catalog(imgcol: BaseImageCollection) -> pystac.item_collection.ItemCollection:
@@ -38,7 +39,7 @@ def get_best_image(image_selection) -> pystac.item.Item:
     return best_image
 
 
-def get_individual_bands(image, band_nums:dict, subset=False) -> dict:
+def get_individual_bands(image, band_nums:Dict, subset: Union[bool, slice, None] = False) -> dict:
     """Get the individual bands (e.g. Red, Green, and Blue) from the selected image."""
     assets = image.assets
 

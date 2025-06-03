@@ -1,4 +1,5 @@
 from eo.base_image_collection import BaseImageCollection
+from eo.base_image import BaseImage
 from eo.image_utils import search_catalog, get_best_image, get_individual_bands
 from eo.utils import set_up_dask
 
