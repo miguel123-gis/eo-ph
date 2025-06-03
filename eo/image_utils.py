@@ -39,7 +39,7 @@ def get_best_image(image_selection) -> pystac.item.Item:
     return best_image
 
 
-def get_individual_bands(image, band_nums:Dict, subset: Union[bool, slice, None] = False) -> dict:
+def get_individual_bands(image, band_nums:Dict, subset: Union[bool, slice, None] = False) -> Dict:
     """Get the individual bands (e.g. Red, Green, and Blue) from the selected image."""
     assets = image.assets
 
