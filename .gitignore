@@ -4,8 +4,12 @@
 scratch/
 !scratch/.gitkeep
 
-out/*
-!out/.gitkeep
+data/
+data/raw/
+data/processed/
+!data/.gitkeep
+!data/raw/.gitkeep
+!data/processed/.gitkeep
 
 venv/
 
