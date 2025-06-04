@@ -1,0 +1,8 @@
+bands:
+  red: B04
+  green: B03
+  blue: B02
+
+lower_percentile: 0.02
+upper_percentile: 0.98
+no_data_value: 0

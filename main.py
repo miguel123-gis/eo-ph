@@ -1,13 +1,14 @@
 from eo.base_image_collection import BaseImageCollection
 from eo.base_image import BaseImage
 from eo.image_utils import search_catalog, get_best_image, get_individual_bands
-from eo.utils import set_up_dask
+from eo.utils import set_up_dask, load_config
 
-BANDS_SELECTION = {
-    'red': 'B04',
-    'green': 'B03',
-    'blue': 'B02'
-}
+config = load_config('config.yaml')
+
+BANDS_SELECTION = config['bands']
+LOWER_PERC = config['lower_percentile']
+UPPER_PERC = config['upper_percentile']
+NO_DATA_VAL = config['no_data_value']
 
 if __name__ == "__main__":
     set_up_dask(enabled=True)
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     )
 
     image = (
-        BaseImage(bands=rgb_bands, lower=0.02, upper=0.98, no_data_value=0)
+        BaseImage(bands=rgb_bands, lower=LOWER_PERC, upper=UPPER_PERC, no_data_value=NO_DATA_VAL)
         .plot_histogram_with_percentiles()
         .stretch_contrast()
         .stack_bands(['red', 'green', 'blue'])
