@@ -9,9 +9,10 @@ BANDS_SELECTION = config['bands']
 LOWER_PERC = config['lower_percentile']
 UPPER_PERC = config['upper_percentile']
 NO_DATA_VAL = config['no_data_value']
+RGB_BANDS = None
 
-if __name__ == "__main__":
-    set_up_dask(enabled=True)
+def run_tasks(**kwargs):
+    out_file = kwargs.get('out_file')
 
     image_collection = BaseImageCollection(
         start_date = '2025-04-01',
@@ -37,4 +38,9 @@ if __name__ == "__main__":
         .process_stack()
     )
 
-    rgb = image.get_rgb_stack(export='data/processed/rgb_v2.tif')
+    image.get_rgb_stack(export=out_file)
+
+
+if __name__ == "__main__":
+    set_up_dask(enabled=True)
+    run_tasks(out_file='data/processed/rgb_v2.tif')   
