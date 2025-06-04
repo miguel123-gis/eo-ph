@@ -8,10 +8,11 @@ from eo.utils import set_up_dask, load_config
 config = load_config('config.yaml')
 
 BANDS_SELECTION = config['bands']
+SLICE = slice(config['slice_start'], config['slice_end'])
 LOWER_PERC = config['lower_percentile']
 UPPER_PERC = config['upper_percentile']
 NO_DATA_VAL = config['no_data_value']
-RGB_BANDS = None
+GAMMA_CORRECTION = config['gamma_correction']
 
 def run_tasks(**kwargs):
     out_file = kwargs.get('out_file')
@@ -29,7 +30,7 @@ def run_tasks(**kwargs):
     rgb_bands = get_individual_bands(
         best_image, 
         BANDS_SELECTION,
-        subset=slice(5000,6000)
+        subset=SLICE
     )
 
     image = (
@@ -37,7 +38,7 @@ def run_tasks(**kwargs):
         .plot_histogram_with_percentiles()
         .stretch_contrast()
         .stack_bands(['red', 'green', 'blue'])
-        .process_stack()
+        .process_stack(gamma=GAMMA_CORRECTION)
     )
 
     image.get_rgb_stack(export=out_file)
