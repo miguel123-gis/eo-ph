@@ -1,5 +1,6 @@
+import rioxarray
 import xarray as xr
-from typing import Dict, List
+from typing import Dict, List, Union, AnyStr
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -70,6 +71,7 @@ class BaseImage:
     
 
     def stack_bands(self, band_order:List) -> "BaseImage":
+        """Stack individual bands based on order."""
         try:
             bands_to_stack = [self.bands[band] for band in band_order]
         except KeyError as e:
@@ -81,8 +83,23 @@ class BaseImage:
         return self
     
 
-    def get_rgb_stack(self) -> xr.DataArray:
+    def get_rgb_stack(self, export:Union[bool, AnyStr, None]) -> xr.DataArray:
         if self._rgb_stack is None:
             raise ValueError('No RGB stack. Use stack_bands() first.')
         
+        if export:
+            self._rgb_stack.rio.to_raster(export, compress="deflate", lock=False, tiled=True)
+            return self._rgb_stack
+        
         return self._rgb_stack
+    
+
+    def process_stack(self, max_val=255, gamma=2.2, type=np.uint8, chunk=512) -> "BaseImage":
+        gamma_corrected = self._rgb_stack ** (1/gamma)
+        asuint8 = (gamma_corrected.clip(0,1) * max_val).astype(type)
+        ordered = asuint8.assign_coords(band=[1, 2, 3])
+        ordered.rio.write_crs(self.bands['red'].rio.crs, inplace=False)
+        chunked = ordered.chunk({'band': -1, 'y': chunk, 'x': chunk})
+        self._rgb_stack = chunked
+
+        return self

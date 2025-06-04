@@ -29,10 +29,11 @@ if __name__ == "__main__":
     )
 
     image = (
-        BaseImage(bands=rgb_bands, lower=2, upper=98, no_data_value=0)
+        BaseImage(bands=rgb_bands, lower=0.02, upper=0.98, no_data_value=0)
         .plot_histogram_with_percentiles()
         .stretch_contrast()
         .stack_bands(['red', 'green', 'blue'])
+        .process_stack()
     )
 
-    rgb = image.get_rgb_stack()
+    rgb = image.get_rgb_stack(export='data/processed/rgb_v2.tif')
