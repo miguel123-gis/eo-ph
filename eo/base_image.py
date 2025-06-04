@@ -94,7 +94,7 @@ class BaseImage:
         return self._rgb_stack
     
 
-    def process_stack(self, max_val=255, gamma=2.2, type=np.uint8, chunk=512) -> "BaseImage":
+    def process_stack(self, max_val, gamma, type, chunk) -> "BaseImage":
         gamma_corrected = self._rgb_stack ** (1/gamma)
         asuint8 = (gamma_corrected.clip(0,1) * max_val).astype(type)
         ordered = asuint8.assign_coords(band=[1, 2, 3])

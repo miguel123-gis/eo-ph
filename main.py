@@ -1,5 +1,6 @@
 import argparse
 import rioxarray
+import numpy as np
 from eo.base_image_collection import BaseImageCollection
 from eo.base_image import BaseImage
 from eo.image_utils import search_catalog, get_best_image, get_individual_bands
@@ -7,12 +8,21 @@ from eo.utils import set_up_dask, load_config
 
 config = load_config('config.yaml')
 
+DTYPE_MAP = {
+    'uint8': np.uint8,
+    'uint16': np.uint16,
+    'float32': np.float32,
+}
+
 BANDS_SELECTION = config['bands']
 SLICE = slice(config['slice_start'], config['slice_end'])
 LOWER_PERC = config['lower_percentile']
 UPPER_PERC = config['upper_percentile']
 NO_DATA_VAL = config['no_data_value']
+MAX_VAL = config['maximum_value']
+BIT_DEPTH = DTYPE_MAP.get(config['maximum_value'])
 GAMMA_CORRECTION = config['gamma_correction']
+CHUNK_SIZE = config['chunk_size']
 
 def run_tasks(**kwargs):
     out_file = kwargs.get('out_file')
@@ -38,7 +48,7 @@ def run_tasks(**kwargs):
         .plot_histogram_with_percentiles()
         .stretch_contrast()
         .stack_bands(['red', 'green', 'blue'])
-        .process_stack(gamma=GAMMA_CORRECTION)
+        .process_stack(max_val=MAX_VAL, gamma=GAMMA_CORRECTION, type=BIT_DEPTH, chunk=CHUNK_SIZE)
     )
 
     image.get_rgb_stack(export=out_file)
