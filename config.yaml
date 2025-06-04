@@ -1,0 +1,17 @@
+bands:
+  red: B04
+  green: B03
+  blue: B02
+
+# Size of subset
+slice_start: 5000
+slice_end: 6000
+
+# Processing after stacking bands
+lower_percentile: 1
+upper_percentile: 99
+no_data_value: 0
+maximum_value: 255
+bit_depth: uint8
+gamma_correction: 1
+chunk_size: 512
