@@ -1,3 +1,5 @@
+import argparse
+import rioxarray
 from eo.base_image_collection import BaseImageCollection
 from eo.base_image import BaseImage
 from eo.image_utils import search_catalog, get_best_image, get_individual_bands
@@ -42,5 +44,36 @@ def run_tasks(**kwargs):
 
 
 if __name__ == "__main__":
-    set_up_dask(enabled=True)
-    run_tasks(out_file='data/processed/rgb_v2.tif')   
+    parser = argparse.ArgumentParser(
+        description=("Get the best image based on XY and date range"),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument("--mode", required=True, type=str)
+    parser.add_argument("--out", required=False, type=str)
+    parser.add_argument("--tif", required=False, type=str)
+    parser.add_argument("--bn", required=False, type=str)
+    parser.add_argument("--lo", required=False, type=str)
+    parser.add_argument("--up", required=False, type=str)
+    args = parser.parse_args()
+
+    mode = args.mode
+    out = args.out
+    tif = args.tif
+    bn = args.bn
+    lo = args.lo
+    up = args.up
+
+    if mode == 'run':
+        set_up_dask(enabled=True)
+        run_tasks(out_file=out)
+
+    elif mode == 'hist':
+        BaseImage._plot_histogram_with_percentiles(
+            band_name=bn,
+            band_array=rioxarray.open_rasterio(tif),
+            lower=int(lo), upper=int(up),
+            figsize=(8,4),
+            out_file=out
+        )
+        
