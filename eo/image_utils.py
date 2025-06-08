@@ -3,7 +3,7 @@ import pystac.item
 import pystac.item_collection
 import pystac_client
 import planetary_computer
-import geopandas as gpd
+import pandas as pd
 import rioxarray
 from typing import Dict, Union
 from eo.base_image_collection import BaseImageCollection
@@ -37,6 +37,33 @@ def get_best_image(image_selection) -> pystac.item.Item:
     best_image = min(image_selection, key=lambda item: item.properties["eo:cloud_cover"])
 
     return best_image
+
+
+def get_best_images(image_selection, interval='monthly') -> pystac.item_collection.ItemCollection:
+    """Selects the image with the lowest cloud cover per month from the image collection."""
+    ic = pystac.item_collection
+    temp_df = pd.DataFrame([result.to_dict() for result in image_selection]) 
+
+    capture_date = temp_df.properties.str['datetime'].rename('capture_date') # Unnest capture date and cloud cover inside 'properties'
+    cloud_cover = temp_df.properties.str['eo:cloud_cover'].rename('cloud_cover')
+
+    add_cols = pd.concat([capture_date, cloud_cover], axis=1)
+    add_cols_df = pd.DataFrame(add_cols) # Create a DF of the two columns
+    add_cols_df['capture_date'] = pd.to_datetime(add_cols_df['capture_date'])
+    concat_dfs = pd.concat([temp_df, add_cols_df], axis=1) # Add back the created DF to the original DF 
+
+    best_images_df = concat_dfs.loc[ # Group by month and get the item with lowest cloud cover
+        concat_dfs.groupby(pd.Grouper(key='capture_date', axis=0, freq='ME')).cloud_cover.idxmin()
+    ]
+    best_images_ids = best_images_df['id'].to_list()
+
+    best_images = [
+        item
+        for item in image_selection
+        if any(item.id in image_id for image_id in best_images_ids)
+    ]
+
+    return ic.ItemCollection(best_images)
 
 
 def get_individual_bands(image, band_nums:Dict, subset: Union[bool, slice, None] = False) -> Dict:
