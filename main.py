@@ -20,7 +20,7 @@ LOWER_PERC = config['lower_percentile']
 UPPER_PERC = config['upper_percentile']
 NO_DATA_VAL = config['no_data_value']
 MAX_VAL = config['maximum_value']
-BIT_DEPTH = DTYPE_MAP.get(config['maximum_value'])
+BIT_DEPTH = DTYPE_MAP.get(config['bit_depth'])
 GAMMA_CORRECTION = config['gamma_correction']
 CHUNK_SIZE = config['chunk_size']
 
