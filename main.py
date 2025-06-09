@@ -24,19 +24,20 @@ BIT_DEPTH = DTYPE_MAP.get(config['bit_depth'])
 GAMMA_CORRECTION = config['gamma_correction']
 CHUNK_SIZE = config['chunk_size']
 
-def run_tasks(**kwargs):
+IMAGE_COLLECTION = BaseImageCollection(
+    start_date = '2025-04-01',
+    end_date = '2025-04-30',
+    lon = 123.30178949703331,
+    lat = 13.513854650838848,
+    collection = 'sentinel-2-l2a'
+)
+
+IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
+
+def run_tasks_single(**kwargs):
     out_file = kwargs.get('out_file')
-
-    image_collection = BaseImageCollection(
-        start_date = '2025-04-01',
-        end_date = '2025-04-30',
-        lon = 123.30178949703331,
-        lat = 13.513854650838848,
-        collection = 'sentinel-2-l2a'
-    )
-
-    image_results = search_catalog(image_collection)
-    best_image = get_best_image(image_results)
+    
+    best_image = get_best_image(IMAGE_RESULTS)
     rgb_bands = get_individual_bands(
         best_image, 
         BANDS_SELECTION,
@@ -75,9 +76,9 @@ if __name__ == "__main__":
     lo = args.lo
     up = args.up
 
-    if mode == 'run':
+    if mode == 'single':
         set_up_dask(enabled=True)
-        run_tasks(out_file=out)
+        run_tasks_single(out_file=out)
 
     elif mode == 'hist':
         BaseImage._plot_histogram_with_percentiles(
