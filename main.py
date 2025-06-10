@@ -16,6 +16,10 @@ DTYPE_MAP = {
 
 PROCESSED_IMG_DIR = 'data/processed'
 BANDS_SELECTION = config['bands']
+START_DATE = config['start_date']
+END_DATE = config['end_date']
+LONGITUDE = float(config['longitude'])
+LATITUDE = float(config['latitude'])
 SLICE = slice(config['slice_start'], config['slice_end'])
 LOWER_PERC = config['lower_percentile']
 UPPER_PERC = config['upper_percentile']
@@ -26,10 +30,10 @@ GAMMA_CORRECTION = config['gamma_correction']
 CHUNK_SIZE = config['chunk_size']
 
 IMAGE_COLLECTION = BaseImageCollection(
-    start_date = '2025-04-01',
-    end_date = '2025-04-30',
-    lon = 123.30178949703331,
-    lat = 13.513854650838848,
+    start_date = START_DATE,
+    end_date = END_DATE,
+    lon = LONGITUDE,
+    lat = LATITUDE,
     collection = 'sentinel-2-l2a'
 )
 
