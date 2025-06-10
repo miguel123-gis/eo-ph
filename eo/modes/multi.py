@@ -20,19 +20,14 @@ NO_DATA_VAL = CONFIG['no_data_value']
 
 def run(**kwargs):
     image_selection = kwargs.get('image_selection')
-    best_images = get_best_images(image_selection)
+    best_images = get_best_images(image_selection, interval='yearly')
     processed_images = {}
 
     for image in best_images:
-        rgb_bands = get_individual_bands(image, BANDS_SELECTION, subset=SLICE)
         true_color = get_visual_asset(image, subset=SLICE)
+        base_img = BaseImage(bands=None, true_color=true_color, lower=LOWER_PERC, upper=UPPER_PERC, no_data_value=NO_DATA_VAL)
 
-        processed_image = (
-            BaseImage(bands=rgb_bands, true_color=true_color, lower=LOWER_PERC, upper=UPPER_PERC, no_data_value=NO_DATA_VAL)
-            .stack_bands(['red', 'green', 'blue'])
-        )
-
-        processed_images[image.id] = processed_image
+        processed_images[image.id] = base_img
 
     for name, processed_image in processed_images.items():
-        processed_image.get_rgb_stack(export=f"{PROCESSED_IMG_DIR}/{name}.tif")
+        processed_image.get_true_color(export=f"{PROCESSED_IMG_DIR}/{name}.tif")

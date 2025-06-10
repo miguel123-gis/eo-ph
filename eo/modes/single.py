@@ -24,17 +24,23 @@ CHUNK_SIZE = config['chunk_size']
 def run(**kwargs):
     out_file = kwargs.get('out_file')
     image_selection = kwargs.get('image_selection')
+    type = kwargs.get('type')
 
     best_image = get_best_image(image_selection)
     rgb_bands = get_individual_bands(best_image, BANDS_SELECTION, subset=SLICE)
     true_color = get_visual_asset(best_image, subset=SLICE)
+    base_image = BaseImage(bands=rgb_bands, true_color=true_color, lower=LOWER_PERC, upper=UPPER_PERC, no_data_value=NO_DATA_VAL)
+    
+    if type == 'rgb': 
+        rgb_img = (
+            base_image
+            .plot_histogram_with_percentiles()
+            .stretch_contrast()
+            .stack_bands(['red', 'green', 'blue'])
+            .process_stack(max_val=MAX_VAL, gamma=GAMMA_CORRECTION, type=BIT_DEPTH, chunk=CHUNK_SIZE)
+        )
 
-    image = (
-        BaseImage(bands=rgb_bands, true_color=true_color, lower=LOWER_PERC, upper=UPPER_PERC, no_data_value=NO_DATA_VAL)
-        .plot_histogram_with_percentiles()
-        .stretch_contrast()
-        .stack_bands(['red', 'green', 'blue'])
-        .process_stack(max_val=MAX_VAL, gamma=GAMMA_CORRECTION, type=BIT_DEPTH, chunk=CHUNK_SIZE)
-    )
-
-    image.get_rgb_stack(export=out_file)
+        rgb_img.get_rgb_stack(export=out_file)
+    
+    elif type == 'visual':
+        base_image.get_true_color(export=out_file)

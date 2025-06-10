@@ -33,6 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--bn", required=False, type=str)
     parser.add_argument("--lo", required=False, type=str)
     parser.add_argument("--up", required=False, type=str)
+    parser.add_argument("--type", required=False, type=str)
     args = parser.parse_args()
 
     mode = args.mode
@@ -41,15 +42,17 @@ if __name__ == "__main__":
     bn = args.bn
     lo = args.lo
     up = args.up
+    up = args.up
+    type = args.type
 
     if mode == 'single':
         set_up_dask(enabled=True)
-        single.run(image_selection=IMAGE_RESULTS, out_file=out)
+        single.run(image_selection=IMAGE_RESULTS, out_file=out, type=type)
 
     elif mode == 'multi':
         set_up_dask(enabled=True)
         multi.run(image_selection=IMAGE_RESULTS)
 
     elif mode == 'hist':
-        hist.run(bn, tif, lo, up, out)
+        hist.run(bn=bn, tif=tif, lo=lo, up=up, out=out)
         
