@@ -3,6 +3,12 @@ bands:
   green: B03
   blue: B02
 
+# Date range and location
+start_date: 2025-04-01
+end_date: 2025-04-30
+longitude: 123.30178949703331
+latitude: 13.513854650838848
+
 # Size of subset
 slice_start: 5000
 slice_end: 6000
