@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 class BaseImage:
     def __init__(
             self, bands: Dict[str, xr.DataArray], 
+            true_color: xr.DataArray,
             lower:float, upper:float, no_data_value:float
         ):
         self.bands = bands
+        self.true_color = true_color
         self._rgb_stack = None
         self.lower_percentile = lower
         self.upper_percentile = upper
@@ -92,6 +94,17 @@ class BaseImage:
             return self._rgb_stack
         
         return self._rgb_stack
+    
+
+    def get_true_color(self, export:Union[bool, AnyStr, None]) -> xr.DataArray:
+        if self.true_color is None:
+            raise ValueError('No true color asset. Use image_utils.get_true_color() first.')
+        
+        if export:
+            self.true_color.rio.to_raster(export, compress="deflate", lock=False, tiled=True)
+            return self.true_color
+        
+        return self.true_color
     
 
     def process_stack(self, max_val, gamma, type, chunk) -> "BaseImage":

@@ -90,7 +90,7 @@ def get_individual_bands(image, band_nums:Dict, subset: Union[bool, slice, None]
     return bands
 
 
-def get_true_color(image: pystac.Item, subset: Union[bool, slice, None] = False) -> xarray.DataArray:
+def get_visual_asset(image: pystac.Item, subset: Union[bool, slice, None] = False) -> xarray.DataArray:
     va_array = rioxarray.open_rasterio(image.assets['visual'].href)
 
     if subset:
