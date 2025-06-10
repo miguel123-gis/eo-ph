@@ -43,6 +43,7 @@ def get_best_images(image_selection, interval='monthly') -> pystac.item_collecti
     """Selects the image with the lowest cloud cover per month from the image collection."""
     ic = pystac.item_collection
     temp_df = pd.DataFrame([result.to_dict() for result in image_selection]) 
+    frequency = 'YE' if interval == 'yearly' else 'ME'
 
     capture_date = temp_df.properties.str['datetime'].rename('capture_date') # Unnest capture date and cloud cover inside 'properties'
     cloud_cover = temp_df.properties.str['eo:cloud_cover'].rename('cloud_cover')
@@ -53,7 +54,7 @@ def get_best_images(image_selection, interval='monthly') -> pystac.item_collecti
     concat_dfs = pd.concat([temp_df, add_cols_df], axis=1) # Add back the created DF to the original DF 
 
     best_images_df = concat_dfs.loc[ # Group by month and get the item with lowest cloud cover
-        concat_dfs.groupby(pd.Grouper(key='capture_date', axis=0, freq='ME')).cloud_cover.idxmin()
+        concat_dfs.groupby(pd.Grouper(key='capture_date', axis=0, freq=frequency)).cloud_cover.idxmin()
     ]
     best_images_ids = best_images_df['id'].to_list()
 

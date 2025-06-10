@@ -1,5 +1,6 @@
 *.code-workspace
 *.pyc
+config.yaml
 
 scratch/
 !scratch/.gitkeep
