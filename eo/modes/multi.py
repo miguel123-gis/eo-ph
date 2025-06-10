@@ -13,18 +13,10 @@ DTYPE_MAP = {
 
 PROCESSED_IMG_DIR = 'data/processed'
 BANDS_SELECTION = CONFIG['bands']
-START_DATE = CONFIG['start_date']
-END_DATE = CONFIG['end_date']
-LONGITUDE = float(CONFIG['longitude'])
-LATITUDE = float(CONFIG['latitude'])
 SLICE = slice(CONFIG['slice_start'], CONFIG['slice_end'])
 LOWER_PERC = CONFIG['lower_percentile']
 UPPER_PERC = CONFIG['upper_percentile']
 NO_DATA_VAL = CONFIG['no_data_value']
-MAX_VAL = CONFIG['maximum_value']
-BIT_DEPTH = DTYPE_MAP.get(CONFIG['bit_depth'])
-GAMMA_CORRECTION = CONFIG['gamma_correction']
-CHUNK_SIZE = CONFIG['chunk_size']
 
 def run(**kwargs):
     image_selection = kwargs.get('image_selection')

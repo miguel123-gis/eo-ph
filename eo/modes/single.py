@@ -11,12 +11,7 @@ DTYPE_MAP = {
     'float32': np.float32,
 }
 
-PROCESSED_IMG_DIR = 'data/processed'
 BANDS_SELECTION = config['bands']
-START_DATE = config['start_date']
-END_DATE = config['end_date']
-LONGITUDE = float(config['longitude'])
-LATITUDE = float(config['latitude'])
 SLICE = slice(config['slice_start'], config['slice_end'])
 LOWER_PERC = config['lower_percentile']
 UPPER_PERC = config['upper_percentile']
