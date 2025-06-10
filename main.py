@@ -51,5 +51,5 @@ if __name__ == "__main__":
         multi.run(image_selection=IMAGE_RESULTS)
 
     elif mode == 'hist':
-        hist.run(bn, tif, lo, up, out)
+        hist.run(bn=bn, tif=tif, lo=lo, up=up, out=out)
         
