@@ -5,6 +5,7 @@ import pystac_client
 import planetary_computer
 import pandas as pd
 import rioxarray
+import xarray
 from typing import Dict, Union
 from eo.base_image_collection import BaseImageCollection
 
@@ -87,3 +88,14 @@ def get_individual_bands(image, band_nums:Dict, subset: Union[bool, slice, None]
         return bands_subset
 
     return bands
+
+
+def get_visual_asset(image: pystac.Item, subset: Union[bool, slice, None] = False) -> xarray.DataArray:
+    va_array = rioxarray.open_rasterio(image.assets['visual'].href)
+
+    if subset:
+        subset_ar = va_array.isel(x=subset, y=subset)
+
+        return subset_ar
+
+    return va_array
