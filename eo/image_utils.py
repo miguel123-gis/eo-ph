@@ -6,6 +6,8 @@ import planetary_computer
 import pandas as pd
 import rioxarray
 import xarray
+import duckdb
+from shapely.geometry import box
 from typing import Dict, Union
 from eo.base_image_collection import BaseImageCollection
 
@@ -90,12 +92,77 @@ def get_individual_bands(image, band_nums:Dict, subset: Union[bool, slice, None]
     return bands
 
 
-def get_visual_asset(image: pystac.Item, subset: Union[bool, slice, None] = False) -> xarray.DataArray:
+def get_visual_asset(image: pystac.Item, subset:list) -> xarray.DataArray:
     va_array = rioxarray.open_rasterio(image.assets['visual'].href)
 
-    if subset:
-        subset_ar = va_array.isel(x=subset, y=subset)
+    if subset is not None or subset is not False:
+        # subset_ar = va_array.isel(x=subset, y=subset)
+        minx = subset[0]
+        miny = subset[1]
+        maxx = subset[2]
+        maxy = subset[3]
+        raster = rioxarray.raster_array.RasterArray(va_array)
+        raster.write_crs(va_array.rio.crs)
+        clipped = raster.clip_box(minx=minx, miny=miny, maxx=maxx, maxy=maxy)
 
-        return subset_ar
+        return clipped
 
     return va_array
+
+
+def get_image_clip(raster, bbox: box, out_file=None):
+    import rasterio    
+    from rasterio.windows import from_bounds
+
+    with rasterio.open(raster) as src:
+        window = from_bounds(*bbox.bounds, transform=src.transform)
+        data = src.read(window=window)
+        transform = src.window_transform(window)
+
+        kwargs = src.meta.copy()
+        kwargs.update({
+            'height': window.height,
+            'width': window.width,
+            'transform': transform
+        })
+        
+        if out_file is not None:
+            with rasterio.open(out_file, 'w', **kwargs) as dest:
+                dest.write(data)
+
+        return data
+
+
+
+def get_bbox_from_point(x:float, y:float, source_crs:int, target_crs:int, bbox_size:int) -> box:
+    """Return a shapely box created from the minimum and maximum XY of the bounding box of the buffer from the given point"""
+    conn = duckdb.connect()
+
+    query = f"""
+        INSTALL spatial; LOAD spatial;
+
+        WITH geom AS (
+            SELECT 
+                ST_Envelope(
+                    ST_Buffer(
+                        ST_Transform(
+                            ST_Point({x}, {y}), 
+                            'EPSG:{source_crs}',
+                            'EPSG:{target_crs}',
+                            always_xy := true
+                        ),
+                    {bbox_size}
+                    )
+                ) AS geom
+            )
+        SELECT 
+            ST_XMin(geom) AS xmin, 
+            ST_YMin(geom) AS ymin,
+            ST_XMax(geom) AS xmax,
+            ST_YMax(geom) AS ymax,
+        FROM geom;
+    """
+
+    bounds = conn.sql(query).fetchall()[0]
+
+    return box(bounds[0], bounds[1], bounds[2], bounds[3])

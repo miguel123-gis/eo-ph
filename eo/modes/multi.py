@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 from eo.base_image import BaseImage
 from eo.image_utils import get_best_images, get_individual_bands, get_visual_asset
 from eo.utils import load_config
@@ -30,4 +31,6 @@ def run(**kwargs):
         processed_images[image.id] = base_img
 
     for name, processed_image in processed_images.items():
-        processed_image.get_true_color(export=f"{PROCESSED_IMG_DIR}/{name}.tif")
+        out_file = f"{PROCESSED_IMG_DIR}/{name}.tif"
+        if not Path(out_file).is_file():
+            processed_image.get_true_color(export=out_file)
