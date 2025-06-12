@@ -4,11 +4,8 @@ import pystac.item_collection
 import pystac_client
 import planetary_computer
 import pandas as pd
-import rioxarray
-import xarray
 import duckdb
 from shapely.geometry import box
-from typing import Dict, Union
 from eo.base_image_collection import BaseImageCollection
 
 def search_catalog(imgcol: BaseImageCollection) -> pystac.item_collection.ItemCollection:
@@ -68,39 +65,6 @@ def get_best_images(image_selection, interval='monthly') -> pystac.item_collecti
     ]
 
     return ic.ItemCollection(best_images)
-
-
-def get_individual_bands(image, band_nums:Dict, subset: Union[bool, slice, None] = False) -> Dict:
-    """Get the individual bands (e.g. Red, Green, and Blue) from the selected image."""
-    assets = image.assets
-
-    bands = {
-        name: rioxarray.open_rasterio(url.href, chunks=True)
-        for name, band_num in band_nums.items()
-        for band, url in assets.items()
-        if band_num == band
-    }
-
-    if subset:
-        bands_subset = {
-            name: band.isel(x=subset, y=subset)
-            for name, band in bands.items()
-        }
-
-        return bands_subset
-
-    return bands
-
-
-def get_visual_asset(image: pystac.Item, subset: Union[bool, slice, None] = False) -> xarray.DataArray:
-    va_array = rioxarray.open_rasterio(image.assets['visual'].href)
-
-    if subset:
-        subset_ar = va_array.isel(x=subset, y=subset)
-
-        return subset_ar
-
-    return va_array
 
 
 def get_image_clip(raster, bbox: box, out_file=None):

@@ -8,7 +8,8 @@ class BaseImage:
     def __init__(
             self, 
             image_item: pystac.Item,
-            band_nums: Dict = None
+            band_nums: Dict = None,
+            true_color = False,
         ):
         self.image_item = image_item
         self.bands = None
@@ -18,6 +19,9 @@ class BaseImage:
 
         if band_nums is not None:
             self.bands = self.get_individual_bands(band_nums)
+
+        if true_color:
+            self.true_color = self.get_visual_asset()
 
 
     def get_individual_bands(self, band_nums:Dict) -> Dict:
@@ -32,6 +36,13 @@ class BaseImage:
         }
 
         return bands
+    
+
+    def get_visual_asset(self) -> xr.DataArray:
+        """Get the pre-stacked RGB true color asset from a PySTAC item"""
+        va_array = rioxarray.open_rasterio(self.image_item.assets['visual'].href)
+
+        return va_array
     
 
     @staticmethod
@@ -83,17 +94,6 @@ class BaseImage:
             return self._rgb_stack
         
         return self._rgb_stack
-    
-
-    def get_true_color(self, export:Union[bool, AnyStr, None]) -> xr.DataArray:
-        if self.true_color is None:
-            raise ValueError('No true color asset. Use image_utils.get_true_color() first.')
-        
-        if export:
-            self.true_color.rio.to_raster(export, compress="deflate", lock=False, tiled=True)
-            return self.true_color
-        
-        return self.true_color
     
 
     def process_stack(self, max_val, gamma, type, chunk) -> "BaseImage":
