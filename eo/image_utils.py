@@ -1,14 +1,13 @@
 import pystac
-import pystac.item
-import pystac.item_collection
 import pystac_client
 import planetary_computer
+import xarray as xr
 import pandas as pd
-import rioxarray
-from typing import Dict, Union
+import duckdb
+from shapely.geometry import box
 from eo.base_image_collection import BaseImageCollection
 
-def search_catalog(imgcol: BaseImageCollection) -> pystac.item_collection.ItemCollection:
+def search_catalog(imgcol: BaseImageCollection) -> pystac.item.Item:
     """Search a collection e.g. Sentintel 2 based on XY and date range."""
     date_range = f'{imgcol.start_date}/{imgcol.end_date}'
     xy = {
@@ -67,23 +66,40 @@ def get_best_images(image_selection, interval='monthly') -> pystac.item_collecti
     return ic.ItemCollection(best_images)
 
 
-def get_individual_bands(image, band_nums:Dict, subset: Union[bool, slice, None] = False) -> Dict:
-    """Get the individual bands (e.g. Red, Green, and Blue) from the selected image."""
-    assets = image.assets
+def export(raster: xr.DataArray, out_file): 
+    """Write an xarray to disk"""
+    raster.rio.to_raster(out_file, compress="deflate", lock=False, tiled=True)
 
-    bands = {
-        name: rioxarray.open_rasterio(url.href, chunks=True)
-        for name, band_num in band_nums.items()
-        for band, url in assets.items()
-        if band_num == band
-    }
 
-    if subset:
-        bands_subset = {
-            name: band.isel(x=subset, y=subset)
-            for name, band in bands.items()
-        }
+def get_bbox_from_point(x:float, y:float, source_crs:int, target_crs:int, bbox_size:int) -> box:
+    """Return a shapely box created from the minimum and maximum XY of the bounding box of the buffer from the given point"""
+    conn = duckdb.connect()
 
-        return bands_subset
+    query = f"""
+        INSTALL spatial; LOAD spatial;
 
-    return bands
+        WITH geom AS (
+            SELECT 
+                ST_Envelope(
+                    ST_Buffer(
+                        ST_Transform(
+                            ST_Point({x}, {y}), 
+                            'EPSG:{source_crs}',
+                            'EPSG:{target_crs}',
+                            always_xy := true
+                        ),
+                    {bbox_size}
+                    )
+                ) AS geom
+            )
+        SELECT 
+            ST_XMin(geom) AS xmin, 
+            ST_YMin(geom) AS ymin,
+            ST_XMax(geom) AS xmax,
+            ST_YMax(geom) AS ymax,
+        FROM geom;
+    """
+
+    bounds = conn.sql(query).fetchall()[0]
+
+    return box(bounds[0], bounds[1], bounds[2], bounds[3])
