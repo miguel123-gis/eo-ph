@@ -54,6 +54,6 @@ if __name__ == "__main__":
         multi.run(image_selection=IMAGE_RESULTS, typ=typ)
 
     elif mode == 'hist':
-        pass
+        pass # Temporarily disable until AnnotatedImage is fully working
         # hist.run(bn=bn, tif=tif, lo=lo, up=up, out=out)
         
