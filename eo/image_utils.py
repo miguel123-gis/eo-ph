@@ -67,30 +67,6 @@ def get_best_images(image_selection, interval='monthly') -> pystac.item_collecti
     return ic.ItemCollection(best_images)
 
 
-def get_image_clip(raster, bbox: box, out_file=None):
-    import rasterio    
-    from rasterio.windows import from_bounds
-
-    with rasterio.open(raster) as src:
-        window = from_bounds(*bbox.bounds, transform=src.transform)
-        data = src.read(window=window)
-        transform = src.window_transform(window)
-
-        kwargs = src.meta.copy()
-        kwargs.update({
-            'height': window.height,
-            'width': window.width,
-            'transform': transform
-        })
-        
-        if out_file is not None:
-            with rasterio.open(out_file, 'w', **kwargs) as dest:
-                dest.write(data)
-
-        return data
-
-
-
 def get_bbox_from_point(x:float, y:float, source_crs:int, target_crs:int, bbox_size:int) -> box:
     """Return a shapely box created from the minimum and maximum XY of the bounding box of the buffer from the given point"""
     conn = duckdb.connect()
