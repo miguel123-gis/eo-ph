@@ -2,7 +2,7 @@ import argparse
 from eo.base_image_collection import BaseImageCollection
 from eo.image_utils import search_catalog
 from eo.utils import set_up_dask, load_config
-from eo.modes import single, multi, hist
+from eo.modes import multi
 
 CONFIG = load_config('config.yaml')
 
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--bn", required=False, type=str)
     parser.add_argument("--lo", required=False, type=str)
     parser.add_argument("--up", required=False, type=str)
-    parser.add_argument("--type", required=False, type=str)
+    parser.add_argument("--typ", required=False, type=str)
     args = parser.parse_args()
 
     mode = args.mode
@@ -43,16 +43,18 @@ if __name__ == "__main__":
     lo = args.lo
     up = args.up
     up = args.up
-    type = args.type
+    typ = args.typ
 
     if mode == 'single':
-        set_up_dask(enabled=True)
-        single.run(image_selection=IMAGE_RESULTS, out_file=out, type=type)
+        pass
+        # set_up_dask(enabled=True)
+        # single.run(image_selection=IMAGE_RESULTS, out_file=out, typ=typ)
 
     elif mode == 'multi':
         set_up_dask(enabled=True)
-        multi.run(image_selection=IMAGE_RESULTS)
+        multi.run(image_selection=IMAGE_RESULTS, typ=typ)
 
     elif mode == 'hist':
-        hist.run(bn=bn, tif=tif, lo=lo, up=up, out=out)
+        pass
+        # hist.run(bn=bn, tif=tif, lo=lo, up=up, out=out)
         

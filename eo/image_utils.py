@@ -1,14 +1,13 @@
 import pystac
-import pystac.item
-import pystac.item_collection
 import pystac_client
 import planetary_computer
+import xarray as xr
 import pandas as pd
 import duckdb
 from shapely.geometry import box
 from eo.base_image_collection import BaseImageCollection
 
-def search_catalog(imgcol: BaseImageCollection) -> pystac.item_collection.ItemCollection:
+def search_catalog(imgcol: BaseImageCollection) -> pystac.item.Item:
     """Search a collection e.g. Sentintel 2 based on XY and date range."""
     date_range = f'{imgcol.start_date}/{imgcol.end_date}'
     xy = {
@@ -65,6 +64,11 @@ def get_best_images(image_selection, interval='monthly') -> pystac.item_collecti
     ]
 
     return ic.ItemCollection(best_images)
+
+
+def export(raster: xr.DataArray, out_file): 
+    """Write an xarray to disk"""
+    raster.rio.to_raster(out_file, compress="deflate", lock=False, tiled=True)
 
 
 def get_bbox_from_point(x:float, y:float, source_crs:int, target_crs:int, bbox_size:int) -> box:
