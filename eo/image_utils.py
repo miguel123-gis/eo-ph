@@ -92,20 +92,13 @@ def get_individual_bands(image, band_nums:Dict, subset: Union[bool, slice, None]
     return bands
 
 
-def get_visual_asset(image: pystac.Item, subset:list) -> xarray.DataArray:
+def get_visual_asset(image: pystac.Item, subset: Union[bool, slice, None] = False) -> xarray.DataArray:
     va_array = rioxarray.open_rasterio(image.assets['visual'].href)
 
-    if subset is not None or subset is not False:
-        # subset_ar = va_array.isel(x=subset, y=subset)
-        minx = subset[0]
-        miny = subset[1]
-        maxx = subset[2]
-        maxy = subset[3]
-        raster = rioxarray.raster_array.RasterArray(va_array)
-        raster.write_crs(va_array.rio.crs)
-        clipped = raster.clip_box(minx=minx, miny=miny, maxx=maxx, maxy=maxy)
+    if subset:
+        subset_ar = va_array.isel(x=subset, y=subset)
 
-        return clipped
+        return subset_ar
 
     return va_array
 
