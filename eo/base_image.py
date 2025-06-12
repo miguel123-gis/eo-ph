@@ -1,3 +1,4 @@
+import pystac
 import rioxarray
 import xarray as xr
 from typing import Dict, List, Union, AnyStr
@@ -5,14 +6,33 @@ import numpy as np
 
 class BaseImage:
     def __init__(
-            self, bands: Dict[str, xr.DataArray], 
-            true_color: xr.DataArray,
-
+            self, 
+            image_item: pystac.Item,
+            band_nums: Dict = None
         ):
-        self.bands = bands
-        self.true_color = true_color
+        self.image_item = image_item
+        self.bands = None
+        self.true_color = None
         self._rgb_stack = None
+        self._clipped_data = None
 
+        if band_nums is not None:
+            self.bands = self.get_individual_bands(band_nums)
+
+
+    def get_individual_bands(self, band_nums:Dict) -> Dict:
+        """Get the individual bands (e.g. Red, Green, and Blue) from the selected image."""
+        assets = self.image_item.assets
+
+        bands = {
+            name: rioxarray.open_rasterio(url.href, chunks=True)
+            for name, band_num in band_nums.items()
+            for band, url in assets.items()
+            if band_num == band
+        }
+
+        return bands
+    
 
     @staticmethod
     def _stretch_contrast(band_array, lower, upper, nodataval) -> xr.DataArray:
