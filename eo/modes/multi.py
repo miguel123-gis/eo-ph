@@ -47,9 +47,9 @@ def run(**kwargs):
         if EXPORT_RGB:
             xarrays = {**base_img.bands, 'true_color': base_img.true_color}
             for name, xarr in xarrays.items():
-                out_file = out_file.replace('.tif', f'_{name}.tif')
+                band_out_file = out_file.replace('.tif', f'_{name}.tif')
                 if not Path(out_file).is_file():
-                    export(xarr, out_file)
+                    export(xarr, band_out_file)
 
         else:
             if not Path(out_file).is_file():

@@ -1,9 +1,10 @@
 import numpy as np
+from pathlib import Path
 from eo.base_image import BaseImage
-from eo.image_utils import get_best_image, get_individual_bands, get_visual_asset
+from eo.image_utils import get_best_image, get_bbox_from_point, export
 from eo.utils import load_config
 
-config = load_config('config.yaml')
+CONFIG = load_config('config.yaml')
 
 DTYPE_MAP = {
     'uint8': np.uint8,
@@ -11,36 +12,48 @@ DTYPE_MAP = {
     'float32': np.float32,
 }
 
-BANDS_SELECTION = config['bands']
-SLICE = slice(config['slice_start'], config['slice_end'])
-LOWER_PERC = config['lower_percentile']
-UPPER_PERC = config['upper_percentile']
-NO_DATA_VAL = config['no_data_value']
-MAX_VAL = config['maximum_value']
-BIT_DEPTH = DTYPE_MAP.get(config['bit_depth'])
-GAMMA_CORRECTION = config['gamma_correction']
-CHUNK_SIZE = config['chunk_size']
+LONGITUDE = float(CONFIG['longitude'])
+LATITUDE = float(CONFIG['latitude'])
+PROCESSED_IMG_DIR = 'data/processed'
+BANDS_SELECTION = CONFIG['bands']
+SLICE = slice(CONFIG['slice_start'], CONFIG['slice_end'])
+LOWER_PERC = CONFIG['lower_percentile']
+UPPER_PERC = CONFIG['upper_percentile']
+NO_DATA_VAL = CONFIG['no_data_value']
+MAX_VAL = CONFIG['maximum_value']
+BIT_DEPTH = DTYPE_MAP.get(CONFIG['bit_depth'])
+GAMMA_CORRECTION = CONFIG['gamma_correction']
+CHUNK_SIZE = CONFIG['chunk_size']
+EXPORT_RGB = CONFIG['export_rgb']
 
 def run(**kwargs):
-    out_file = kwargs.get('out_file')
     image_selection = kwargs.get('image_selection')
-    type = kwargs.get('type')
-
+    typ = kwargs.get('typ')
+    assets = {**BANDS_SELECTION, 'true_color': 'visual'}
+    bbox = get_bbox_from_point(LONGITUDE, LATITUDE, 4326, 32651, 10*1000)
     best_image = get_best_image(image_selection)
-    rgb_bands = get_individual_bands(best_image, BANDS_SELECTION, subset=SLICE)
-    true_color = get_visual_asset(best_image, subset=SLICE)
-    base_image = BaseImage(bands=rgb_bands, true_color=true_color, lower=LOWER_PERC, upper=UPPER_PERC, no_data_value=NO_DATA_VAL)
-    
-    if type == 'rgb': 
-        rgb_img = (
-            base_image
-            .plot_histogram_with_percentiles()
-            .stretch_contrast()
-            .stack_bands(['red', 'green', 'blue'])
-            .process_stack(max_val=MAX_VAL, gamma=GAMMA_CORRECTION, type=BIT_DEPTH, chunk=CHUNK_SIZE)
-        )
 
-        rgb_img.get_rgb_stack(export=out_file)
-    
-    elif type == 'visual':
-        base_image.get_true_color(export=out_file)
+    if typ == 'clip':
+        base_img = BaseImage(
+                image_item=best_image, 
+                band_nums=BANDS_SELECTION, 
+                subset=True, 
+                assets=assets, 
+                bbox=bbox
+            )
+        
+    else:
+        base_img = BaseImage(image_item=base_img, band_nums=BANDS_SELECTION, true_color=True)
+
+    out_file =  f"{PROCESSED_IMG_DIR}/{base_img.image_item.id}.tif"
+
+    if EXPORT_RGB:
+        xarrays = {**base_img.bands, 'true_color': base_img.true_color}
+        for name, xarr in xarrays.items():
+            band_out_file = out_file.replace('.tif', f'_{name}.tif')
+            if not Path(out_file).is_file():
+                export(xarr, band_out_file)
+
+    else:
+        if not Path(out_file).is_file():
+            export(base_img.true_color, out_file)
