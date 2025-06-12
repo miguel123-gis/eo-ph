@@ -1,21 +1,111 @@
+import pystac
 import rioxarray
 import xarray as xr
-from typing import Dict, List, Union, AnyStr
 import numpy as np
-import matplotlib.pyplot as plt
+import rasterio    
+from rasterio.windows import from_bounds
+from typing import Dict, List, Union, AnyStr
+
 
 class BaseImage:
     def __init__(
-            self, bands: Dict[str, xr.DataArray], 
-            true_color: xr.DataArray,
-            lower:float, upper:float, no_data_value:float
+            self, 
+            image_item: pystac.Item,
+            band_nums: Dict = None,
+            true_color = False,
+            subset = False,
+            **kwargs
         ):
-        self.bands = bands
-        self.true_color = true_color
+        self.image_item = image_item
+        self.band_nums = band_nums
+        self.bands = None
+        self.true_color = None
         self._rgb_stack = None
-        self.lower_percentile = lower
-        self.upper_percentile = upper
-        self.no_data_value = no_data_value
+        self.kwargs = kwargs
+
+        if subset:
+            assets = self.kwargs.get("assets")
+            bbox = self.kwargs.get("bbox")
+
+            if assets is None or bbox is None:
+                raise ValueError("subset=True requires assets and bbox kwargs.")
+            
+            self.clip(assets=assets, bbox=bbox)
+
+        else:
+            if band_nums is not None:
+                self.bands = self.get_individual_bands(self.band_nums)
+
+            if true_color:
+                self.true_color = self.get_visual_asset()
+
+
+    def get_individual_bands(self, band_nums:Dict) -> Dict:
+        """Get the individual bands (e.g. Red, Green, and Blue) from the selected image."""
+        assets = self.image_item.assets
+
+        bands = {
+            name: rioxarray.open_rasterio(url.href, chunks=True)
+            for name, band_num in band_nums.items()
+            for band, url in assets.items()
+            if band_num == band
+        }
+
+        return bands
+    
+
+    def get_visual_asset(self) -> xr.DataArray:
+        """Get the pre-stacked RGB true color asset from a PySTAC item"""
+        va_array = rioxarray.open_rasterio(self.image_item.assets['visual'].href)
+
+        return va_array
+    
+    
+    def clip(self, assets:list, bbox):
+        """Clips the PySTAC item's RGB and visual assets with a shapely box"""
+        rgb_assets = list(self.band_nums.keys())
+        self.bands = {}
+
+        for name, asset in assets.items():
+            cog = self.image_item.assets[asset].href
+
+            with rasterio.open(cog) as src:
+                window = from_bounds(*bbox.bounds, transform=src.transform)
+                data = src.read(window=window) # Only read the data within the window
+                transform = src.window_transform(window)
+                crs = src.crs
+                count, height, width = data.shape
+                coords = {
+                    "band": list(range(1, count + 1)),
+                    "y": np.arange(height) * transform.e + transform.f,
+                    "x": np.arange(width) * transform.a + transform.c
+                }
+                
+                kwargs = src.meta.copy()
+                kwargs.update({
+                    'height': window.height,
+                    'width': window.width,
+                    'transform': transform
+                })
+
+                # Convert the numpy array to xarray for consistency
+                da = xr.DataArray(
+                    data,
+                    dims=("band", "y", "x"),
+                    coords=coords,
+                    attrs={
+                        "transform": transform,
+                        "crs": crs.to_string() if crs else None,
+                        "res": src.res,
+                        "nodata": src.nodata
+                    }
+                )
+
+                if name in rgb_assets:
+                    self.bands[name] = da
+                
+                else: 
+                    self.true_color = da
 
 
     @staticmethod
@@ -33,33 +123,6 @@ class BaseImage:
         # Stretch and clip the band
         stretched = (band_array - p_low) / (p_high - p_low)
         return stretched.clip(0,1)
-    
-
-    @staticmethod
-    def _plot_histogram_with_percentiles(
-        band_name, band_array, 
-        lower:float, upper:float, figsize:tuple,
-        out_file:str
-    ):
-        p_low, p_high = np.percentile(band_array, (lower, upper))
-        plt.figure(figsize=figsize)
-        plt.hist(band_array.values.ravel(), bins=100, color='gray', alpha=0.7)
-        plt.axvline(p_low, color='red', linestyle='--', label=f'{lower}% ({p_low:.1f})')
-        plt.axvline(p_high, color='green', linestyle='--', label=f'{upper}% ({p_high:.1f})')
-        plt.title(f'{band_name} Histogram with {lower}% and {upper}% Percentiles')
-        plt.legend()
-        plt.savefig(out_file)
-
-
-    def plot_histogram_with_percentiles(self):
-        for name, band in self.bands.items():
-            self._plot_histogram_with_percentiles(
-                name, band, 
-                self.lower_percentile, self.upper_percentile, figsize=(8,4),
-                out_file=f"data/misc/{name}_{self.lower_percentile}_{self.upper_percentile}.png"
-                )
-            
-        return self
     
     
     def stretch_contrast(self) -> "BaseImage":
@@ -94,17 +157,6 @@ class BaseImage:
             return self._rgb_stack
         
         return self._rgb_stack
-    
-
-    def get_true_color(self, export:Union[bool, AnyStr, None]) -> xr.DataArray:
-        if self.true_color is None:
-            raise ValueError('No true color asset. Use image_utils.get_true_color() first.')
-        
-        if export:
-            self.true_color.rio.to_raster(export, compress="deflate", lock=False, tiled=True)
-            return self.true_color
-        
-        return self.true_color
     
 
     def process_stack(self, max_val, gamma, type, chunk) -> "BaseImage":
