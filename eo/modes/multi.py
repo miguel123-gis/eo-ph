@@ -14,9 +14,9 @@ DTYPE_MAP = {
 
 LONGITUDE = float(CONFIG['longitude'])
 LATITUDE = float(CONFIG['latitude'])
+BUFFER_SIZE_M = CONFIG['buffer_size']
 PROCESSED_IMG_DIR = 'data/processed'
 BANDS_SELECTION = CONFIG['bands']
-SLICE = slice(CONFIG['slice_start'], CONFIG['slice_end'])
 LOWER_PERC = CONFIG['lower_percentile']
 UPPER_PERC = CONFIG['upper_percentile']
 NO_DATA_VAL = CONFIG['no_data_value']

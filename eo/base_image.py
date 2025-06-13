@@ -2,8 +2,10 @@ import pystac
 import rioxarray
 import xarray as xr
 import numpy as np
-import rasterio    
+import rasterio 
+from rasterio.plot import plotting_extent
 from rasterio.windows import from_bounds
+from shapely.geometry import box
 from typing import Dict, List, Union, AnyStr
 
 
@@ -20,6 +22,7 @@ class BaseImage:
         self.band_nums = band_nums
         self.bands = None
         self.true_color = None
+        self._extent = None
         self._rgb_stack = None
         self.kwargs = kwargs
 
@@ -34,19 +37,19 @@ class BaseImage:
 
         else:
             if band_nums is not None:
-                self.bands = self.get_individual_bands(self.band_nums)
+                self.bands = self.get_individual_bands()
 
             if true_color:
                 self.true_color = self.get_visual_asset()
 
 
-    def get_individual_bands(self, band_nums:Dict) -> Dict:
+    def get_individual_bands(self) -> Dict:
         """Get the individual bands (e.g. Red, Green, and Blue) from the selected image."""
         assets = self.image_item.assets
 
         bands = {
             name: rioxarray.open_rasterio(url.href, chunks=True)
-            for name, band_num in band_nums.items()
+            for name, band_num in self.band_nums.items()
             for band, url in assets.items()
             if band_num == band
         }
@@ -168,3 +171,26 @@ class BaseImage:
         self._rgb_stack = chunked
 
         return self
+    
+    
+    @property
+    def extent(self) -> box:
+        """Extent of the assets: bands and true color"""
+        if self._extent is None:
+            self._get_image_extent()
+
+        return self._extent
+        
+
+    def _get_image_extent(self) -> box:
+        """Get extent of the images that is more accurate than :func:`image_utils.get_bbox_from_point`"""
+        tc = self.true_color
+        extent = plotting_extent(tc[0], transform=tc.rio.transform())
+        min_x, max_x, min_y, max_y = extent
+        bbox = box(min_x, min_y, max_x, max_y)
+
+        self._extent = bbox
+
+        # TODO Figure out why the output bounds are different from this and get_bbox_from_point using the same point 123.733908, 13.152780
+        # (569533.9820448935, 1444152.1070559227, 589533.9820448935, 1464152.1070559227) vs
+        # (569538.9820448935, 1444147.1070559227, 589538.9820448935, 1464147.1070559227)
