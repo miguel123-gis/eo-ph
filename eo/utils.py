@@ -20,3 +20,10 @@ def set_up_dask(enabled=False, dashboard=False, num_workers=4, min_workers=4, ma
 
         if dashboard:
             return cluster.dashboard_link
+
+
+def simplify_datetime(date):
+    from datetime import datetime
+
+    dt = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%fZ')
+    return dt.strftime('%Y %B %d %-I:%M%p')
