@@ -177,7 +177,7 @@ class BaseImage:
     def extent(self) -> box:
         """Extent of the assets: bands and true color"""
         if self._extent is None:
-            self._extent = self._get_image_extent()
+            self._get_image_extent()
 
         return self._extent
         
@@ -190,6 +190,7 @@ class BaseImage:
         bbox = box(min_x, min_y, max_x, max_y)
 
         self._extent = bbox
+
         # TODO Figure out why the output bounds are different from this and get_bbox_from_point using the same point 123.733908, 13.152780
         # (569533.9820448935, 1444152.1070559227, 589533.9820448935, 1464152.1070559227) vs
         # (569538.9820448935, 1444147.1070559227, 589538.9820448935, 1464147.1070559227)

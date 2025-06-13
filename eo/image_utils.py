@@ -105,10 +105,10 @@ def get_bbox_from_point(x:float, y:float, source_crs:int, target_crs:int, bbox_s
 
     return box(bounds[0], bounds[1], bounds[2], bounds[3])
 
-def get_map_center(raster: xr.DataArray, geometry: box) -> list:
+def get_map_center(geometry: box, crs) -> list:
     """Get map center of a given geometry"""
     xy = list(
-        gpd.GeoDataFrame({'geometry': [geometry]}, crs=raster.crs)
+        gpd.GeoDataFrame({'geometry': [geometry]}, crs=crs)
         .to_crs('EPSG:4326')
         .centroid.get_coordinates()
         .iloc[0]
