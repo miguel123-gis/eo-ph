@@ -34,19 +34,19 @@ class BaseImage:
 
         else:
             if band_nums is not None:
-                self.bands = self.get_individual_bands(self.band_nums)
+                self.bands = self.get_individual_bands()
 
             if true_color:
                 self.true_color = self.get_visual_asset()
 
 
-    def get_individual_bands(self, band_nums:Dict) -> Dict:
+    def get_individual_bands(self) -> Dict:
         """Get the individual bands (e.g. Red, Green, and Blue) from the selected image."""
         assets = self.image_item.assets
 
         bands = {
             name: rioxarray.open_rasterio(url.href, chunks=True)
-            for name, band_num in band_nums.items()
+            for name, band_num in self.band_nums.items()
             for band, url in assets.items()
             if band_num == band
         }

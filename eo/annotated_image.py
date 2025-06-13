@@ -2,14 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from eo.base_image import BaseImage
 
-class AnnotatedImage(BaseImage):
+class AnnotatedImage:
     def __init__(
             self, 
-            bands,
-            true_color,
+            base_image: BaseImage,
             lower:float, upper:float, no_data_value:float
         ):
-        super().__init__(bands, true_color)
+        self.bands = base_image.bands
+        self.true_color = base_image.true_color
         self.lower_percentile = lower
         self.upper_percentile = upper
         self.no_data_value = no_data_value
