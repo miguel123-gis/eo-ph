@@ -22,6 +22,8 @@ IMAGE_COLLECTION = BaseImageCollection(
 IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
 
 if __name__ == "__main__":
+    set_up_dask()
+
     parser = argparse.ArgumentParser(
         description=("Get the best image based on XY and date range"),
         formatter_class=argparse.RawDescriptionHelpFormatter
@@ -46,11 +48,9 @@ if __name__ == "__main__":
     typ = args.typ
 
     if mode == 'single':
-        set_up_dask(enabled=True)
         single.run(image_selection=IMAGE_RESULTS, typ=typ)
 
     elif mode == 'multi':
-        set_up_dask(enabled=True)
         multi.run(image_selection=IMAGE_RESULTS, typ=typ)
 
     elif mode == 'hist':

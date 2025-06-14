@@ -5,6 +5,7 @@ import xarray as xr
 import pandas as pd
 import geopandas as gpd
 import duckdb
+from pathlib import Path
 from shapely.geometry import box
 from eo.base_image_collection import BaseImageCollection
 
@@ -65,11 +66,6 @@ def get_best_images(image_selection, interval='monthly') -> pystac.item_collecti
     ]
 
     return ic.ItemCollection(best_images)
-
-
-def export(raster: xr.DataArray, out_file): 
-    """Write an xarray to disk"""
-    raster.rio.to_raster(out_file, compress="deflate", lock=False, tiled=True)
 
 
 def get_bbox_from_point(x:float, y:float, source_crs:int, target_crs:int, bbox_size:int) -> box:
