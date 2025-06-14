@@ -23,6 +23,11 @@ class AnnotatedImage:
 
 
     def annotate(self, boundaries:gpd.GeoDataFrame, out_dir, **kwargs):
+        lon = kwargs.get('lon')
+        lat = kwargs.get('lat')
+        figsize = kwargs.get('figsize')
+        dpi = kwargs.get('dpi')
+
         """Add texts to a plot"""
         # Reorder the array for pyplot
         image = self.true_color.values
@@ -37,7 +42,7 @@ class AnnotatedImage:
         clipped_bdrys = boundaries.clip(self.extent)
         
         # Plot the raster and then vector
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=(figsize, figsize))
         ax.imshow(image, extent=reordered_extent)
         clipped_bdrys.boundary.plot(ax=ax, edgecolor='white', linewidth=0.15)    
 
@@ -45,14 +50,14 @@ class AnnotatedImage:
         capture_date = simplify_datetime(self.image_properties['datetime'])
         platform = self.image_properties['platform']
         cloud_cover = self.image_properties['eo:cloud_cover']
-        map_center = f"{round(kwargs.get('lon'), 3)}, {round(kwargs.get('lat'), 3)}"
+        map_center = f"{round(lon, 3)}, {round(lat, 3)}"
         munis = ','.join(list_intersecting_municipalities(clipped_bdrys))
 
         plt.axis('off')
-        plt.figtext(0.13, 0.09, f'From {platform} with image ID of {self.image_id}', ha='left', va='bottom', fontname='Helvetica', fontsize=10)
-        plt.figtext(0.13, 0.07, f'Captured on {capture_date} with {int(cloud_cover)}% cloud cover', ha='left', va='bottom', fontname='Helvetica', fontsize=10)
-        plt.figtext(0.13, 0.05, f'Covers {munis} with center at {map_center}', ha='left', va='bottom', fontname='Helvetica', fontsize=10)
-        plt.savefig(f'{out_dir}/{self.image_id}.png', dpi=200)
+        plt.figtext(0.13, 0.09, f'From {platform} with image ID of {self.image_id}', ha='left', va='bottom', fontname='Helvetica', fontsize=12)
+        plt.figtext(0.13, 0.07, f'Captured on {capture_date} with {int(cloud_cover)}% cloud cover', ha='left', va='bottom', fontname='Helvetica', fontsize=12)
+        plt.figtext(0.13, 0.05, f'Covers {munis} with center at {map_center}', ha='left', va='bottom', fontname='Helvetica', fontsize=12)
+        plt.savefig(f'{out_dir}/{self.image_id}.png', dpi=dpi, bbox_inches='tight')
 
         
     @staticmethod

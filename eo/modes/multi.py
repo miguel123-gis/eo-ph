@@ -18,6 +18,8 @@ LATITUDE = float(CONFIG['latitude'])
 BUFFER_SIZE_M = CONFIG['buffer_size_meters']
 PROCESSED_IMG_DIR = CONFIG['processed_images_directory']
 PH_BDRYS = CONFIG['ph_boundaries_gpkg']
+FIGSIZE = CONFIG['figure_size']
+DPI = CONFIG['dpi']
 BANDS_SELECTION = CONFIG['bands']
 LOWER_PERC = CONFIG['lower_percentile']
 UPPER_PERC = CONFIG['upper_percentile']
@@ -45,6 +47,10 @@ def run(**kwargs):
             base_img = BaseImage(image_item=image, band_nums=BANDS_SELECTION, true_color=True)
         if annotate:
             annt_img = AnnotatedImage(base_image=base_img)
-            annt_img.annotate(boundaries=PH_BDRYS, out_dir=PROCESSED_IMG_DIR, lon=LONGITUDE, lat=LATITUDE)
+            annt_img.annotate(
+                boundaries=PH_BDRYS, out_dir=PROCESSED_IMG_DIR, 
+                lon=LONGITUDE, lat=LATITUDE,
+                figsize=FIGSIZE, dpi=DPI
+            )
         else:
             base_img.export(export_rgb=EXPORT_RGB, out_dir=PROCESSED_IMG_DIR)
