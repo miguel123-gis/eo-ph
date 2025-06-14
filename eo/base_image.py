@@ -1,12 +1,14 @@
 import pystac
 import rioxarray
 import xarray as xr
+import rioxarray as rxr
 import numpy as np
 import rasterio 
 from rasterio.plot import plotting_extent
 from rasterio.windows import from_bounds
 from shapely.geometry import box
 from typing import Dict, List, Union, AnyStr
+from pathlib import Path
 
 
 class BaseImage:
@@ -194,3 +196,17 @@ class BaseImage:
         # TODO Figure out why the output bounds are different from this and get_bbox_from_point using the same point 123.733908, 13.152780
         # (569533.9820448935, 1444152.1070559227, 589533.9820448935, 1464152.1070559227) vs
         # (569538.9820448935, 1444147.1070559227, 589538.9820448935, 1464147.1070559227)
+
+    
+    def export(self, out_dir, export_rgb=False):
+        out_file = f"{out_dir}/{self.image_item.id}.tif"
+        if export_rgb:
+            xarrays = {**self.bands, 'true_color': self.true_color}
+            for name, xarr in xarrays.items():
+                band_out_file = out_file.replace('.tif', f'_{name}.tif')
+                if not Path(out_file).is_file():
+                    xarr.rio.to_raster(band_out_file, compress="deflate", lock=False, tiled=True)
+
+        else:
+            if not Path(out_file).is_file():
+                self.true_color.rio.to_raster(out_file, compress="deflate", lock=False, tiled=True)
