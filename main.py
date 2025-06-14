@@ -50,7 +50,7 @@ if __name__ == "__main__":
     annt = args.annt
 
     if mode == 'single':
-        single.run(image_selection=IMAGE_RESULTS, type=type)
+        single.run(image_selection=IMAGE_RESULTS, type=type, annt=annt)
 
     elif mode == 'multi':
         multi.run(image_selection=IMAGE_RESULTS, type=type, annt=annt)
