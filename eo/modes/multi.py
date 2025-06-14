@@ -1,6 +1,7 @@
 import numpy as np
 from pathlib import Path
 from eo.base_image import BaseImage
+from eo.annotated_image import AnnotatedImage
 from eo.image_utils import get_best_images, get_bbox_from_point
 from eo.utils import load_config
 
@@ -15,7 +16,8 @@ DTYPE_MAP = {
 LONGITUDE = float(CONFIG['longitude'])
 LATITUDE = float(CONFIG['latitude'])
 BUFFER_SIZE_M = CONFIG['buffer_size_meters']
-PROCESSED_IMG_DIR = 'data/processed'
+PROCESSED_IMG_DIR = CONFIG['processed_images_directory']
+PH_BDRYS = CONFIG['ph_boundaries_gpkg']
 BANDS_SELECTION = CONFIG['bands']
 LOWER_PERC = CONFIG['lower_percentile']
 UPPER_PERC = CONFIG['upper_percentile']
@@ -24,13 +26,14 @@ EXPORT_RGB = CONFIG['export_rgb']
 
 def run(**kwargs):
     image_selection = kwargs.get('image_selection')
-    typ = kwargs.get('typ')
+    type = kwargs.get('type')
+    annotate = kwargs.get('annt')
     assets = {**BANDS_SELECTION, 'true_color': 'visual'}
     bbox = get_bbox_from_point(LONGITUDE, LATITUDE, 4326, 32651, BUFFER_SIZE_M*1000)
     best_images = get_best_images (image_selection, interval='yearly')
 
     for image in best_images:
-        if typ == 'clip':
+        if type == 'clip':
             base_img = BaseImage(
                 image_item=image, 
                 band_nums=BANDS_SELECTION, 
@@ -38,8 +41,10 @@ def run(**kwargs):
                 assets=assets, 
                 bbox=bbox
             )
-
         else:
             base_img = BaseImage(image_item=image, band_nums=BANDS_SELECTION, true_color=True)
-
-        base_img.export(export_rgb=EXPORT_RGB, out_dir=PROCESSED_IMG_DIR)
+        if annotate:
+            annt_img = AnnotatedImage(base_image=base_img)
+            annt_img.annotate(boundaries=PH_BDRYS, out_dir=PROCESSED_IMG_DIR, lon=LONGITUDE, lat=LATITUDE)
+        else:
+            base_img.export(export_rgb=EXPORT_RGB, out_dir=PROCESSED_IMG_DIR)
