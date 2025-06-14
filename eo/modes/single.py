@@ -32,13 +32,13 @@ EXPORT_RGB = CONFIG['export_rgb']
 
 def run(**kwargs):
     image_selection = kwargs.get('image_selection')
-    type = kwargs.get('type')
+    clip = kwargs.get('clip')
     annotate = kwargs.get('annt')
     assets = {**BANDS_SELECTION, 'true_color': 'visual'}
     bbox = get_bbox_from_point(LONGITUDE, LATITUDE, 4326, 32651, BUFFER_SIZE_M*1000)
     best_image = get_best_image(image_selection)
 
-    if type == 'clip':
+    if clip:
         base_img = BaseImage(
                 image_item=best_image, 
                 band_nums=BANDS_SELECTION, 

@@ -30,7 +30,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("--mode", required=True, type=str)
-    parser.add_argument("--type", required=False, type=str) # TODO Make --type=clip boolean
+    parser.add_argument('--clip', default=False, action=argparse.BooleanOptionalAction)
     # For annotation
     parser.add_argument('--annt', default=False, action=argparse.BooleanOptionalAction)
     # For histogram mode
@@ -46,14 +46,14 @@ if __name__ == "__main__":
     lo = args.lo
     up = args.up
     up = args.up
-    type = args.type
+    clip = args.clip
     annt = args.annt
 
     if mode == 'single':
-        single.run(image_selection=IMAGE_RESULTS, type=type, annt=annt)
+        single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt)
 
     elif mode == 'multi':
-        multi.run(image_selection=IMAGE_RESULTS, type=type, annt=annt)
+        multi.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt)
 
     elif mode == 'hist':
         pass # Temporarily disable until AnnotatedImage is fully working
