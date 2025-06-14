@@ -102,21 +102,6 @@ def get_bbox_from_point(x:float, y:float, source_crs:int, target_crs:int, bbox_s
     return box(bounds[0], bounds[1], bounds[2], bounds[3])
 
 
-def get_map_center(geometry: box, crs) -> list:
-    """Get map center of a given geometry"""
-    xy = list(
-        gpd.GeoDataFrame({'geometry': [geometry]}, crs=crs)
-        .to_crs('EPSG:4326')
-        .centroid.get_coordinates()
-        .iloc[0]
-    )
-
-    return [
-        str(round(coord, 3))
-        for coord in xy
-    ]
-
-
 def list_intersecting_municipalities(municipalities: gpd.GeoDataFrame):
     """Given a GeoDataFrame that's clipped to a raster's extent, list the municipalities and province based on intersection"""
     area_temp = municipalities.geometry.area.rename('area')

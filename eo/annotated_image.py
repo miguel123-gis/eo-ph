@@ -4,7 +4,7 @@ import geopandas as gpd
 import rioxarray as rxr
 from eo.base_image import BaseImage
 from eo.utils import simplify_datetime
-from eo.image_utils import get_map_center, list_intersecting_municipalities
+from eo.image_utils import list_intersecting_municipalities
 
 class AnnotatedImage:
     def __init__(
@@ -20,10 +20,9 @@ class AnnotatedImage:
         self.lower_percentile = lower
         self.upper_percentile = upper
         self.no_data_value = no_data_value
-        self._annotated_img = None
 
 
-    def annotate(self, boundaries:gpd.GeoDataFrame, out_dir):
+    def annotate(self, boundaries:gpd.GeoDataFrame, out_dir, **kwargs):
         """Add texts to a plot"""
         # Reorder the array for pyplot
         image = self.true_color.values
@@ -46,7 +45,7 @@ class AnnotatedImage:
         capture_date = simplify_datetime(self.image_properties['datetime'])
         platform = self.image_properties['platform']
         cloud_cover = self.image_properties['eo:cloud_cover']
-        map_center = ','.join(get_map_center(self.extent, self.true_color.rio.crs))
+        map_center = f"{round(kwargs.get('lon'), 3)}, {round(kwargs.get('lat'), 3)}"
         munis = ','.join(list_intersecting_municipalities(clipped_bdrys))
 
         plt.axis('off')
