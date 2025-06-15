@@ -21,8 +21,12 @@ def set_up_dask(dashboard=False, num_workers=4, min_workers=4, max_workers=50):
         return cluster.dashboard_link
 
 
-def simplify_datetime(date):
+def simplify_datetime(date, compact=False):
     from datetime import datetime
 
     dt = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%fZ')
+
+    if compact:
+        return dt.strftime('%Y-%m-%d-%H%M')
+    
     return dt.strftime('%Y %B %d %-I:%M%p')
