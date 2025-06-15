@@ -100,18 +100,3 @@ def get_bbox_from_point(x:float, y:float, source_crs:int, target_crs:int, bbox_s
     bounds = conn.sql(query).fetchall()[0]
 
     return box(bounds[0], bounds[1], bounds[2], bounds[3])
-
-
-def list_intersecting_municipalities(municipalities: gpd.GeoDataFrame):
-    """Given a GeoDataFrame that's clipped to a raster's extent, list the municipalities and province based on intersection"""
-    area_temp = municipalities.geometry.area.rename('area')
-    with_area = pd.concat([municipalities, area_temp], axis=1)[['NAME_1', 'NAME_2', 'area']].sort_values("area", ascending=False)
-
-    agg_df = (
-        with_area.groupby("NAME_1")["NAME_2"]
-        .apply(lambda x: ", ".join(x))
-        .reset_index(name="muni_sorted")
-        .rename(columns={"NAME_1": "province"})
-    )
-
-    return agg_df['muni_sorted'].to_list()[0].split(',')[:3]

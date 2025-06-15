@@ -1,6 +1,8 @@
 from dask_gateway import Gateway
 import yaml
 from pathlib import Path
+import geopandas as gpd
+import pandas as pd
 
 def load_config(path):
     with open(Path(path), "r") as f:
@@ -30,3 +32,21 @@ def simplify_datetime(date, compact=False):
         return dt.strftime('%Y-%m-%d-%H%M')
     
     return dt.strftime('%Y %B %d %-I:%M%p')
+
+
+def list_intersecting_municipalities(municipalities: gpd.GeoDataFrame):
+    """Given a GeoDataFrame that's clipped to a raster's extent, list the municipalities and province based on intersection"""
+    area_temp = municipalities.geometry.area.rename('area')
+    with_area = pd.concat([municipalities, area_temp], axis=1)[['NAME_1', 'NAME_2', 'area']].sort_values("area", ascending=False)
+
+    agg_df = (
+        with_area.groupby("NAME_1")["NAME_2"]
+        .apply(lambda x: ", ".join(x))
+        .reset_index(name="muni_sorted")
+        .rename(columns={"NAME_1": "province"})
+    )
+
+    return  {
+        'towns': agg_df['muni_sorted'].to_list()[0].split(',')[:3],
+        'province': agg_df['province'].item()
+    }
