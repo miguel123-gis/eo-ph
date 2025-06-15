@@ -35,18 +35,31 @@ def simplify_datetime(date, compact=False):
 
 
 def list_intersecting_municipalities(municipalities: gpd.GeoDataFrame):
-    """Given a GeoDataFrame that's clipped to a raster's extent, list the municipalities and province based on intersection"""
-    area_temp = municipalities.geometry.area.rename('area')
-    with_area = pd.concat([municipalities, area_temp], axis=1)[['NAME_1', 'NAME_2', 'area']].sort_values("area", ascending=False)
+    """Return the province with the highest total area of intersection and its top 3 municipalities."""
+    municipalities["area"] = municipalities.geometry.area 
 
-    agg_df = (
-        with_area.groupby("NAME_1")["NAME_2"]
-        .apply(lambda x: ", ".join(x))
-        .reset_index(name="muni_sorted")
-        .rename(columns={"NAME_1": "province"})
+    # Sum total area per province
+    province_area = (
+        municipalities.groupby("NAME_1")["area"]
+        .sum()
+        .sort_values(ascending=False)
     )
 
-    return  {
-        'towns': agg_df['muni_sorted'].to_list()[0].split(',')[:3],
-        'province': agg_df['province'].item()
+    # Get the province with greatest intersection
+    top_province = province_area.idxmax()
+
+    # Get the municipalities in top_province
+    top_rows = municipalities[municipalities["NAME_1"] == top_province]
+
+    # Get top 3 municipalities in that province by area
+    top_munis = (
+        top_rows[["NAME_2", "area"]]
+        .sort_values("area", ascending=False)
+        .head(3)["NAME_2"]
+        .tolist()
+    )
+
+    return {
+        "province": top_province,
+        "towns": top_munis
     }
