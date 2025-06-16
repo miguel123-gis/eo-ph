@@ -34,6 +34,7 @@ def run(**kwargs):
     clip = kwargs.get('clip')
     annotate = kwargs.get('annt')
     export_all = kwargs.get('all')
+    plot_boundary = kwargs.get('bdry')
     assets = {**BANDS_SELECTION, 'true_color': 'visual'}
     bbox = get_bbox_from_point(LONGITUDE, LATITUDE, 4326, 32651, BUFFER_SIZE_M*1000)
     best_image = get_best_image(image_selection)
@@ -54,6 +55,7 @@ def run(**kwargs):
         annt_img.annotate(
             boundaries=PH_BDRYS, out_dir=PROCESSED_IMG_DIR, 
             lon=LONGITUDE, lat=LATITUDE,
+            plot_bdry=plot_boundary,
             figsize=FIGSIZE, dpi=DPI
         )
     else:
