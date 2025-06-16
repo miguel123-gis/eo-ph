@@ -30,9 +30,11 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("--mode", required=True, type=str)
-    parser.add_argument('--clip', default=False, action=argparse.BooleanOptionalAction)
-    # For annotation
-    parser.add_argument('--annt', default=False, action=argparse.BooleanOptionalAction)
+    # Switches
+    parser.add_argument('--clip', default=False, action=argparse.BooleanOptionalAction) # Clip images
+    parser.add_argument('--annt', default=False, action=argparse.BooleanOptionalAction) # Annotate images
+    parser.add_argument('--all', default=False, action=argparse.BooleanOptionalAction) # Export all assets (true color and bands)
+    parser.add_argument('--bdry', default=False, action=argparse.BooleanOptionalAction) # Plot boundaries
     # For histogram mode
     parser.add_argument("--tif", required=False, type=str)
     parser.add_argument("--bn", required=False, type=str)
@@ -48,12 +50,14 @@ if __name__ == "__main__":
     up = args.up
     clip = args.clip
     annt = args.annt
+    all = args.all
+    bdry = args.bdry
 
     if mode == 'single':
-        single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt)
+        single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry)
 
     elif mode == 'multi':
-        multi.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt)
+        multi.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry)
 
     elif mode == 'hist':
         pass # Temporarily disable until AnnotatedImage is fully working

@@ -27,6 +27,7 @@ class AnnotatedImage:
         lon = kwargs.get('lon')
         lat = kwargs.get('lat')
         figsize = kwargs.get('figsize')
+        plot_boundary = kwargs.get('plot_bdry')
         dpi = kwargs.get('dpi')
 
         # Reorder the array for pyplot
@@ -44,7 +45,8 @@ class AnnotatedImage:
         # Plot the raster and then vector
         fig, ax = plt.subplots(figsize=(figsize, figsize))
         ax.imshow(image, extent=reordered_extent)
-        clipped_bdrys.boundary.plot(ax=ax, edgecolor='white', linewidth=0.15)    
+        if plot_boundary:
+            clipped_bdrys.boundary.plot(ax=ax, edgecolor='white', linewidth=0.15)    
 
         # Add text
         capture_date = simplify_datetime(self.image_properties['datetime'])
