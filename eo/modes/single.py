@@ -28,12 +28,13 @@ MAX_VAL = CONFIG['maximum_value']
 BIT_DEPTH = DTYPE_MAP.get(CONFIG['bit_depth'])
 GAMMA_CORRECTION = CONFIG['gamma_correction']
 CHUNK_SIZE = CONFIG['chunk_size']
-EXPORT_RGB = CONFIG['export_rgb']
 
 def run(**kwargs):
     image_selection = kwargs.get('image_selection')
     clip = kwargs.get('clip')
     annotate = kwargs.get('annt')
+    export_all = kwargs.get('all')
+    plot_boundary = kwargs.get('bdry')
     assets = {**BANDS_SELECTION, 'true_color': 'visual'}
     bbox = get_bbox_from_point(LONGITUDE, LATITUDE, 4326, 32651, BUFFER_SIZE_M*1000)
     best_image = get_best_image(image_selection)
@@ -48,12 +49,17 @@ def run(**kwargs):
             )
     else:
         base_img = BaseImage(image_item=base_img, band_nums=BANDS_SELECTION, true_color=True)
+        
     if annotate:
         annt_img = AnnotatedImage(base_image=base_img)
         annt_img.annotate(
             boundaries=PH_BDRYS, out_dir=PROCESSED_IMG_DIR, 
             lon=LONGITUDE, lat=LATITUDE,
+            plot_bdry=plot_boundary,
             figsize=FIGSIZE, dpi=DPI
         )
     else:
-        base_img.export(export_rgb=EXPORT_RGB, out_dir=PROCESSED_IMG_DIR)
+        if export_all:
+            base_img.export(export_rgb=True, out_dir=PROCESSED_IMG_DIR)
+        else:
+            base_img.export(out_dir=PROCESSED_IMG_DIR)
