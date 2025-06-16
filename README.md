@@ -1,12 +1,23 @@
-Download a Sentinel-2A/2B image per year
+Download a Sentinel-2A/2B image per month/quarter/year 
+via Planetary Computer
 ---
+*Please open videos in new tab*
+
+Annotated images (not georeferenced, in PNG) of Payatas, Quezon City from 2015-2025
+
 [![Watch the demo](misc/payatas-multi-png-thumbnail.png)](https://youtu.be/mYpqd_L0z5k)
+
+True color TIFs of Davao Bypass Road, Davao City from 2015-2025
+
+[![Watch the demo](misc/davao-bpr-multi-tif-thumbnail.png)](https://youtu.be/Tn0oOnqn7DM)
+
+
 ### Usage
 1. Clone repo
 2. Create venv
 3. Run `dask-gateway-server` in your terminal
 4. Create a `config.yaml` from the sample file
-5. Run `python main.py --mode=single` - see sample calls below
+5. Run `python main.py --mode=multi` - see sample calls below
 
 #### Sample calls
 ```
