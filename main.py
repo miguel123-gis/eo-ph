@@ -22,36 +22,38 @@ IMAGE_COLLECTION = BaseImageCollection(
 IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
 
 if __name__ == "__main__":
+    set_up_dask()
+
     parser = argparse.ArgumentParser(
-        description=("Get the best image based on XY and date range"),
+        description=("Get the best image/s based on XY and date range"),
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     parser.add_argument("--mode", required=True, type=str)
-    parser.add_argument("--out", required=False, type=str)
+    parser.add_argument('--clip', default=False, action=argparse.BooleanOptionalAction)
+    # For annotation
+    parser.add_argument('--annt', default=False, action=argparse.BooleanOptionalAction)
+    # For histogram mode
     parser.add_argument("--tif", required=False, type=str)
     parser.add_argument("--bn", required=False, type=str)
     parser.add_argument("--lo", required=False, type=str)
-    parser.add_argument("--up", required=False, type=str)
-    parser.add_argument("--typ", required=False, type=str)
+    parser.add_argument("--up", required=False, type=bool)
     args = parser.parse_args()
 
     mode = args.mode
-    out = args.out
     tif = args.tif
     bn = args.bn
     lo = args.lo
     up = args.up
     up = args.up
-    typ = args.typ
+    clip = args.clip
+    annt = args.annt
 
     if mode == 'single':
-        set_up_dask(enabled=True)
-        single.run(image_selection=IMAGE_RESULTS, typ=typ)
+        single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt)
 
     elif mode == 'multi':
-        set_up_dask(enabled=True)
-        multi.run(image_selection=IMAGE_RESULTS, typ=typ)
+        multi.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt)
 
     elif mode == 'hist':
         pass # Temporarily disable until AnnotatedImage is fully working

@@ -5,6 +5,7 @@ import xarray as xr
 import pandas as pd
 import geopandas as gpd
 import duckdb
+from pathlib import Path
 from shapely.geometry import box
 from eo.base_image_collection import BaseImageCollection
 
@@ -67,11 +68,6 @@ def get_best_images(image_selection, interval='monthly') -> pystac.item_collecti
     return ic.ItemCollection(best_images)
 
 
-def export(raster: xr.DataArray, out_file): 
-    """Write an xarray to disk"""
-    raster.rio.to_raster(out_file, compress="deflate", lock=False, tiled=True)
-
-
 def get_bbox_from_point(x:float, y:float, source_crs:int, target_crs:int, bbox_size:int) -> box:
     """Return a shapely box created from the minimum and maximum XY of the bounding box of the buffer from the given point"""
     conn = duckdb.connect()
@@ -104,31 +100,3 @@ def get_bbox_from_point(x:float, y:float, source_crs:int, target_crs:int, bbox_s
     bounds = conn.sql(query).fetchall()[0]
 
     return box(bounds[0], bounds[1], bounds[2], bounds[3])
-
-def get_map_center(geometry: box, crs) -> list:
-    """Get map center of a given geometry"""
-    xy = list(
-        gpd.GeoDataFrame({'geometry': [geometry]}, crs=crs)
-        .to_crs('EPSG:4326')
-        .centroid.get_coordinates()
-        .iloc[0]
-    )
-
-    return [
-        str(round(coord, 3))
-        for coord in xy
-    ]
-
-
-def list_intersecting_municipalities(municipalities: gpd.GeoDataFrame):
-    area_temp = municipalities.geometry.area.rename('area')
-    with_area = pd.concat([municipalities, area_temp], axis=1)[['NAME_1', 'NAME_2', 'area']].sort_values("area", ascending=False)
-
-    agg_df = (
-        with_area.groupby("NAME_1")["NAME_2"]
-        .apply(lambda x: ", ".join(x))
-        .reset_index(name="muni_sorted")
-        .rename(columns={"NAME_1": "province"})
-    )
-
-    return agg_df['muni_sorted'].to_list()[0].split(',')[:3]
