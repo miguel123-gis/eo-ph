@@ -8,6 +8,7 @@ import duckdb
 from pathlib import Path
 from shapely.geometry import box
 from eo.base_image_collection import BaseImageCollection
+from eo.constants import FREQUENCY_MAP
 
 def search_catalog(imgcol: BaseImageCollection) -> pystac.item.Item:
     """Search a collection e.g. Sentintel 2 based on XY and date range."""
@@ -40,11 +41,11 @@ def get_best_image(image_selection) -> pystac.item.Item:
     return best_image
 
 
-def get_best_images(image_selection, interval='monthly') -> pystac.item_collection.ItemCollection:
+def get_best_images(image_selection, frequency='yearly') -> pystac.item_collection.ItemCollection:
     """Selects the image with the lowest cloud cover per month from the image collection."""
     ic = pystac.item_collection
     temp_df = pd.DataFrame([result.to_dict() for result in image_selection]) 
-    frequency = 'YE' if interval == 'yearly' else 'ME'
+    frequency = FREQUENCY_MAP.get(frequency)
 
     capture_date = temp_df.properties.str['datetime'].rename('capture_date') # Unnest capture date and cloud cover inside 'properties'
     cloud_cover = temp_df.properties.str['eo:cloud_cover'].rename('cloud_cover')
