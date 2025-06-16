@@ -27,13 +27,14 @@ NO_DATA_VAL = CONFIG['no_data_value']
 
 def run(**kwargs):
     image_selection = kwargs.get('image_selection')
+    frequency = kwargs.get('freq')
     clip = kwargs.get('clip')
     annotate = kwargs.get('annt')
     export_all = kwargs.get('all')
     plot_boundary = kwargs.get('bdry')
     assets = {**BANDS_SELECTION, 'true_color': 'visual'}
     bbox = get_bbox_from_point(LONGITUDE, LATITUDE, 4326, 32651, BUFFER_SIZE_M*1000)
-    best_images = get_best_images (image_selection, interval='yearly')
+    best_images = get_best_images(image_selection, frequency=frequency)
 
     for image in best_images:
         if clip:

@@ -1,5 +1,6 @@
 Download a Sentinel-2A/2B image per year
 ---
+[![Watch the demo](misc/payatas-multi-png-thumbnail.png)](https://youtu.be/mYpqd_L0z5k)
 ### Usage
 1. Clone repo
 2. Create venv
@@ -9,15 +10,17 @@ Download a Sentinel-2A/2B image per year
 
 #### Sample calls
 ```
-# Arguments 
 # Get the image with least cloud cover per year from years XX to XX, clip it given the buffer size, and export the annoted images
 python main.py --mode=multi --clip --annt
 
-# Plot the municipal boundaries
+# Plot the municipal boundaries in the output annotated image
 python main.py --mode=multi --clip --annt --bdry
 
-#Export the true color TIF instead
+# Export the raster/true color TIF instead
 python main.py --mode=multi --clip
+
+# Get image per quater instead of per year (default)
+python main.py --mode=multi --clip --freq=quarterly
 
 # Only get the image with least cloud cover within the entire date range
 python main.py --mode=single --clip
