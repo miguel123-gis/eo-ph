@@ -1,16 +1,11 @@
 Download a Sentinel-2A/2B image per month/quarter/year 
 via Planetary Computer
 ---
-*Please open videos in new tab*
-
 Annotated images (not georeferenced, in PNG) of Payatas, Quezon City from 2015-2025
-
-[![Watch the demo](misc/payatas-multi-png-thumbnail.png)](https://youtu.be/mYpqd_L0z5k)
+![payatas](misc/payatas.gif)
 
 True color TIFs of Davao Bypass Road, Davao City from 2015-2025
-
-[![Watch the demo](misc/davao-bpr-multi-tif-thumbnail.png)](https://youtu.be/Tn0oOnqn7DM)
-
+![payatas](misc/davao.gif)
 
 ### Usage
 1. Clone repo
