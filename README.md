@@ -12,29 +12,37 @@ True color TIFs of Davao Bypass Road, Davao City from 2015-2025
 2. Create venv
 3. Run `dask-gateway-server` in your terminal
 4. Create a `config.yaml` from the sample file
-5. Run `python main.py --mode=multi` - see sample calls below
+5. Run `docker build -t s2-downloader .` to build image
+6. Run to test
+```
+docker run -it -v $(pwd)/data/processed:/eo-ph/data/processed s2-downloader --mode=single --clip
+```
 
-#### Sample calls
+
+
+#### Sample arguments
 ```
 # Get the image with least cloud cover per year from years XX to XX, clip it given the buffer size, and export the annoted images
-python main.py --mode=multi --clip --annt
+<docker command> --mode=multi --clip --annt
 
 # Plot the municipal boundaries in the output annotated image
-python main.py --mode=multi --clip --annt --bdry
+<docker command> --mode=multi --clip --annt --bdry
 
 # Export the raster/true color TIF instead
-python main.py --mode=multi --clip
+<docker command> --mode=multi --clip
 
 # Get image per quater instead of per year (default)
-python main.py --mode=multi --clip --freq=quarterly
+<docker command> --mode=multi --clip --freq=quarterly
 
 # Only get the image with least cloud cover within the entire date range
-python main.py --mode=single --clip
+<docker command> --mode=single --clip
 
 # Export all assets (true color and individual bands e.g red, green, blue)
 # Cannot be used with --annt
-python main.py --mode=single --clip --all
+<docker command> --mode=single --clip --all
 ```
+
+
 
 #### Configuration
 * `bands` - bands to get (will differ per platform e.g. Landsat, Sentinel, etc.)

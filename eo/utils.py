@@ -1,4 +1,5 @@
 from dask_gateway import Gateway
+from dask.distributed import Client, LocalCluster
 import yaml
 from pathlib import Path
 import geopandas as gpd
@@ -10,17 +11,21 @@ def load_config(path):
 
 
 def set_up_dask(dashboard=False, num_workers=4, min_workers=4, max_workers=50):
-    gateway = Gateway("http://127.0.0.1:8000")
-    gateway.list_clusters()
+    gateway = Gateway("http://host.docker.internal:8000") # TODO Pass this as Docker env variable?
 
-    cluster = gateway.new_cluster()
-    cluster.scale(num_workers)
+    ### NOTE Returns a valid dashboard link but crashes - RuntimeError: cannot schedule new futures after shutdown
+    # cluster = gateway.new_cluster()
+    # client = cluster.get_client()
+    ###
 
-    cluster.get_client()
-    cluster.adapt(minimum=min_workers, maximum=max_workers)
+    with LocalCluster() as cluster:
+        with Client(cluster) as client:
+            pass
 
     if dashboard:
         return cluster.dashboard_link
+    
+    return client
 
 
 def simplify_datetime(date, compact=False):
