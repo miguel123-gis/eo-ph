@@ -18,7 +18,6 @@ cryptography==46.0.1
 cycler==0.12.1
 dask==2025.9.1
 dask-gateway==2025.4.0
-dask-gateway-server==2025.4.0
 distributed==2025.9.1
 duckdb==1.4.0
 fonttools==4.60.0

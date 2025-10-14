@@ -1,4 +1,3 @@
-from dask_gateway import Gateway
 from dask.distributed import Client, LocalCluster
 import yaml
 from pathlib import Path
@@ -11,19 +10,11 @@ def load_config(path):
 
 
 def set_up_dask(dashboard=False, num_workers=4, min_workers=4, max_workers=50):
-    gateway = Gateway("http://host.docker.internal:8000") # TODO Pass this as Docker env variable?
-
-    ### NOTE Returns a valid dashboard link but crashes - RuntimeError: cannot schedule new futures after shutdown
-    # cluster = gateway.new_cluster()
-    # client = cluster.get_client()
-    ###
-
-    with LocalCluster() as cluster:
-        with Client(cluster) as client:
-            pass
+    cluster = LocalCluster(host="0.0.0.0", n_workers=4)
+    client = Client(cluster)
 
     if dashboard:
-        return cluster.dashboard_link
+        return 'http://localhost:8787/status' # TODO Pass port number as Docker env
     
     return client
 

@@ -10,13 +10,13 @@ True color TIFs of Davao Bypass Road, Davao City from 2015-2025
 ### Usage
 1. Clone repo
 2. Create venv
-3. Run `dask-gateway-server` in your terminal
 4. Create a `config.yaml` from the sample file
 5. Run `docker build -t s2-downloader .` to build image
 6. Run to test
 ```
-docker run -it -v $(pwd)/data/processed:/eo-ph/data/processed s2-downloader --mode=single --clip
+docker run -it -v $(pwd)/data/processed:/eo-ph/data/processed -p8787:8787 s2-downloader --mode=single --clip
 ```
+7. Check http://localhost:8787/workers to see workers in action
 
 
 
