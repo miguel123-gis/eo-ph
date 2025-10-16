@@ -52,15 +52,16 @@ if __name__ == "__main__":
 
     mode = args.mode
     freq = args.freq
-    tif = args.tif
-    bn = args.bn
-    lo = args.lo
-    up = args.up
-    up = args.up
     clip = args.clip
     annt = args.annt
     all = args.all
     bdry = args.bdry
+
+    # For histogram mode
+    # tif = args.tif
+    # bn = args.bn
+    # lo = args.lo
+    # up = args.up
 
     if mode == 'single':
         single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry, log=log)
