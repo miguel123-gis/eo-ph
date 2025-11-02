@@ -14,12 +14,25 @@ def hello():
 
 @routes.route("/download", methods=['GET', 'POST'])
 def download():
+    data = request.form.to_dict()
+
+    if len(data) > 0:
+        call_download(data)
+    
     return render_template('form.html')
 
 @routes.route('/api/download', methods=['POST'])
 def api_download():
-    data = request.form.to_dict()
+    data = request.get_json(silent=True)
+    
+    if len(data) > 0:
+        call_download(data)
+        return jsonify({"status": "ok", "received": data})
+    
+    if data is None:
+        return jsonify({"status": "error", "message": 'No data received'})
 
+def call_download(data):
     # Required arguments
     start = data.get("start_date")
     end = data.get("end_date")
@@ -34,7 +47,6 @@ def api_download():
     all = data.get("all")
     bdry = data.get("boundary")
 
-    data = request.form.to_dict()
     if len(data) > 0:
         log.info('STARTED EO')
         log.info(f"RECEIVED {data}")
@@ -59,7 +71,3 @@ def api_download():
         elif mode == 'multi':
             multi.run(image_selection=IMAGE_RESULTS, freq=freq, clip=clip, annt=annt, all=all, bdry=bdry)
             log.info('DONE')
-
-        return jsonify({"status": "ok", "received": data})
-    
-    return jsonify({"status": "error", "message": 'No data received'})
