@@ -6,6 +6,7 @@ from eo.utils import set_up_dask, load_config
 from eo.modes import single, multi
 
 routes = Flask(__name__)
+log = logger('eo.log')
 
 @routes.route('/')
 def hello():
@@ -13,14 +14,13 @@ def hello():
 
 @routes.route("/download", methods=['GET', 'POST'])
 def download():
-    log = logger('eo.log')
-    log.info('STARTED EO')
+    return render_template('form.html')
 
-
+@routes.route('/api/download', methods=['POST'])
+def api_download():
     data = request.form.to_dict()
-    log.info(f"RECEIVED {data}")
 
-    # # Required arguments
+    # Required arguments
     start = data.get("start_date")
     end = data.get("end_date")
     lat = data.get("latitude")
@@ -34,29 +34,32 @@ def download():
     all = data.get("all")
     bdry = data.get("boundary")
 
-    dashboard = set_up_dask(dashboard=True)
-    log.info(f'DASK DASHBOARD: {dashboard}')
+    data = request.form.to_dict()
+    if len(data) > 0:
+        log.info('STARTED EO')
+        log.info(f"RECEIVED {data}")
+        dashboard = set_up_dask(dashboard=True)
+        log.info(f'DASK DASHBOARD: {dashboard}')
 
-    # Insert logic for single and multi mode
-    IMAGE_COLLECTION = BaseImageCollection(
-        start_date = start,
-        end_date = end,
-        lon = lon,
-        lat = lat,
-        collection = 'sentinel-2-l2a'
-    )
+        # Insert logic for single and multi mode
+        IMAGE_COLLECTION = BaseImageCollection(
+            start_date = start,
+            end_date = end,
+            lon = lon,
+            lat = lat,
+            collection = 'sentinel-2-l2a'
+        )
 
-    IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
+        IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
 
-    if mode == 'single':
-        single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry, log=log) 
+        if mode == 'single':
+            log.info('DONE')
+            single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry, log=log) 
 
-    elif mode == 'multi':
-        multi.run(image_selection=IMAGE_RESULTS, freq=freq, clip=clip, annt=annt, all=all, bdry=bdry)
+        elif mode == 'multi':
+            multi.run(image_selection=IMAGE_RESULTS, freq=freq, clip=clip, annt=annt, all=all, bdry=bdry)
+            log.info('DONE')
 
-    return render_template('form.html')
-    # return jsonify({"status": "ok", "received": data})
-
-# TODO Add more logging per mode
-# TODO Capture warnings per mode
-# TODO Remove dependency from config file
+        return jsonify({"status": "ok", "received": data})
+    
+    return jsonify({"status": "error", "message": 'No data received'})
