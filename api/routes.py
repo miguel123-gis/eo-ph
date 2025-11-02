@@ -17,6 +17,7 @@ def download():
     data = request.form.to_dict()
 
     if len(data) > 0:
+        log.info('CALLING FROM /download')
         call_download(data)
     
     return render_template('form.html')
@@ -26,6 +27,7 @@ def api_download():
     data = request.get_json(silent=True)
     
     if len(data) > 0:
+        log.info('CALLING FROM /api/download')
         call_download(data)
         return jsonify({"status": "ok", "received": data})
     
@@ -42,7 +44,7 @@ def call_download(data):
     mode = data.get("mode")
     # Optional arguments
     freq = data.get("frequency")
-    clip = data.get("clip")
+    clip = data.get("clip") # TODO Remove this since automatically True if buffer is not None
     annt = data.get("annotate")
     all = data.get("all")
     bdry = data.get("boundary")
@@ -52,6 +54,28 @@ def call_download(data):
         log.info(f"RECEIVED {data}")
         dashboard = set_up_dask(dashboard=True)
         log.info(f'DASK DASHBOARD: {dashboard}')
+
+        log.info(f'GETTING IMAGES INTERSECTING {lon}, {lat} FROM {start} TO {end}')
+
+        if mode == 'single':
+            log.info('RUNNING IN SINGLE MODE, ONLY GETTING THE IMAGE WITH LEAST CLOUD COVER IN DATE RANGE')
+        elif mode == 'multi' and freq:
+            log.info(f'RUNNING IN MULTI MODE, GETTING IMAGE WITH LEAST CLOUD COVER IN DATE RANGE {freq.upper()}')
+            
+        if buffer and clip:
+            log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
+
+        # TODO Figure out if annotate:False in the JSON (returns False), logic still enters if it's just 'if annt'
+        # TODO Currently disabled due to plt.subplot() multithreading crash
+        # if all is True:
+        #     log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
+        
+        # if annt is True:
+        #     log.info(annt)
+        #     log.info('INCLUDING MAP ANNOTATIONS E.G. CAPTURE DATE, CLOUD COVER, ETC.')
+
+        # if bdry is True:
+        #     log.info('PLOTTING BOUNDARIES IN EXPORTS')
 
         # Insert logic for single and multi mode
         IMAGE_COLLECTION = BaseImageCollection(
@@ -63,11 +87,12 @@ def call_download(data):
         )
 
         IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
+        log.info(f'GOT {len(IMAGE_RESULTS)} IMAGES TO SELECT FROM')
 
         if mode == 'single':
-            log.info('DONE')
-            single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry, log=log) 
+            log.info('DONE RUN IN SINGLE MODE')
+            single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry) 
 
         elif mode == 'multi':
             multi.run(image_selection=IMAGE_RESULTS, freq=freq, clip=clip, annt=annt, all=all, bdry=bdry)
-            log.info('DONE')
+            log.info('DONE RUN IN MULTI MODE')
