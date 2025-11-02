@@ -1,4 +1,6 @@
 import argparse
+import webbrowser
+from eo.logger import logger
 from eo.base_image_collection import BaseImageCollection
 from eo.image_utils import search_catalog
 from eo.utils import set_up_dask, load_config
@@ -22,7 +24,12 @@ IMAGE_COLLECTION = BaseImageCollection(
 IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
 
 if __name__ == "__main__":
-    set_up_dask()
+    log = logger('eo.log')
+    log.info('STARTED EO')
+
+    dashboard = set_up_dask(dashboard=True)
+    log.info(f'DASK DASHBOARD: {dashboard}')
+    webbrowser.open(dashboard)
 
     parser = argparse.ArgumentParser(
         description=("Get the best image/s based on XY and date range"),
@@ -56,7 +63,7 @@ if __name__ == "__main__":
     bdry = args.bdry
 
     if mode == 'single':
-        single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry)
+        single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry, log=log)
 
     elif mode == 'multi':
         multi.run(image_selection=IMAGE_RESULTS, freq=freq, clip=clip, annt=annt, all=all, bdry=bdry)
