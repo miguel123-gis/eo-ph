@@ -9,8 +9,8 @@ def load_config(path):
         return yaml.safe_load(f)
 
 
-def set_up_dask(dashboard=False, num_workers=4, min_workers=4, max_workers=50):
-    cluster = LocalCluster(host="0.0.0.0", n_workers=4)
+def set_up_dask(dashboard=False, num_workers=8, min_workers=4, max_workers=50):
+    cluster = LocalCluster(host="0.0.0.0", n_workers=num_workers)
     client = Client(cluster)
 
     if dashboard:

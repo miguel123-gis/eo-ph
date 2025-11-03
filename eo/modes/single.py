@@ -48,7 +48,7 @@ def run(**kwargs):
                 bbox=bbox
             )
     else:
-        base_img = BaseImage(image_item=base_img, band_nums=BANDS_SELECTION, true_color=True)
+        base_img = BaseImage(image_item=best_image, band_nums=BANDS_SELECTION, true_color=True)
         
     if annotate:
         annt_img = AnnotatedImage(base_image=base_img)
