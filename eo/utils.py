@@ -3,20 +3,33 @@ import yaml
 from pathlib import Path
 import geopandas as gpd
 import pandas as pd
+import atexit
 
 def load_config(path):
     with open(Path(path), "r") as f:
         return yaml.safe_load(f)
-
+    
+def safe_close(client, cluster):
+    """Closes a Dask client and cluster when it's created but not closed properly e.g. exiting a process"""
+    def _cleanup():
+        try:
+            client.close()
+            cluster.close()
+        except Exception:
+            pass
+    atexit.register(_cleanup)
+    
 
 def set_up_dask(dashboard=False, num_workers=8, min_workers=4, max_workers=50):
-    cluster = LocalCluster(host="0.0.0.0", n_workers=num_workers)
+    # cluster = LocalCluster(host="0.0.0.0", n_workers=num_workers)
+    cluster = LocalCluster() #
     client = Client(cluster)
 
-    if dashboard:
-        return 'http://localhost:8787/status' # TODO Pass port number as Docker env
-    
-    return client
+    return (
+        cluster,
+        client,
+        'http://localhost:8787/status' # TODO Pass port number as Docker env
+    ) 
 
 
 def simplify_datetime(date, compact=False):

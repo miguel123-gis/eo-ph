@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template
 from eo.logger import logger
 from eo.base_image_collection import BaseImageCollection
 from eo.image_utils import search_catalog
-from eo.utils import set_up_dask, load_config
+from eo.utils import set_up_dask, load_config, safe_close
 from eo.modes import single, multi
 
 routes = Flask(__name__)
@@ -52,7 +52,9 @@ def call_download(data):
     if len(data) > 0:
         log.info('STARTED EO')
         log.info(f"RECEIVED {data}")
-        dashboard = set_up_dask(dashboard=True)
+        cluster, client, dashboard = set_up_dask(dashboard=True)
+        safe_close(client, cluster)
+        
         log.info(f'DASK DASHBOARD: {dashboard}')
 
         log.info(f'GETTING IMAGES INTERSECTING {lon}, {lat} FROM {start} TO {end}')
@@ -62,7 +64,7 @@ def call_download(data):
         elif mode == 'multi' and freq:
             log.info(f'RUNNING IN MULTI MODE, GETTING IMAGE WITH LEAST CLOUD COVER IN DATE RANGE {freq.upper()}')
             
-        if buffer and clip:
+        if buffer is True and clip is True:
             log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
 
         # TODO Figure out if annotate:False in the JSON (returns False), logic still enters if it's just 'if annt'
@@ -71,7 +73,6 @@ def call_download(data):
         #     log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
         
         # if annt is True:
-        #     log.info(annt)
         #     log.info('INCLUDING MAP ANNOTATIONS E.G. CAPTURE DATE, CLOUD COVER, ETC.')
 
         # if bdry is True:
@@ -90,9 +91,12 @@ def call_download(data):
         log.info(f'GOT {len(IMAGE_RESULTS)} IMAGES TO SELECT FROM')
 
         if mode == 'single':
-            log.info('DONE RUN IN SINGLE MODE')
             single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry) 
+            log.info('DONE RUN IN SINGLE MODE')
 
         elif mode == 'multi':
             multi.run(image_selection=IMAGE_RESULTS, freq=freq, clip=clip, annt=annt, all=all, bdry=bdry)
             log.info('DONE RUN IN MULTI MODE')
+    
+        cluster.close()
+        client.close()
