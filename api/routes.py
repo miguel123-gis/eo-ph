@@ -41,10 +41,10 @@ def call_download(data):
     lat = data.get("latitude")
     lon = data.get("longitude")
     buffer = data.get("buffer", 3)
+    log.info(buffer is True)
     mode = data.get("mode")
     # Optional arguments
     freq = data.get("frequency")
-    clip = data.get("clip") # TODO Remove this since automatically True if buffer is not None
     annt = data.get("annotate")
     all = data.get("all")
     bdry = data.get("boundary")
@@ -64,19 +64,21 @@ def call_download(data):
         elif mode == 'multi' and freq:
             log.info(f'RUNNING IN MULTI MODE, GETTING IMAGE WITH LEAST CLOUD COVER IN DATE RANGE {freq.upper()}')
             
-        if buffer is True and clip is True:
+        if buffer and int(buffer) > 0:
+            clip = True
             log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
+        else:
+            clip = False
 
-        # TODO Figure out if annotate:False in the JSON (returns False), logic still enters if it's just 'if annt'
         # TODO Currently disabled due to plt.subplot() multithreading crash
-        # if all is True:
-        #     log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
+        if all is True:
+            log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
         
-        # if annt is True:
-        #     log.info('INCLUDING MAP ANNOTATIONS E.G. CAPTURE DATE, CLOUD COVER, ETC.')
+        if annt is True:
+            log.info('INCLUDING MAP ANNOTATIONS E.G. CAPTURE DATE, CLOUD COVER, ETC.')
 
-        # if bdry is True:
-        #     log.info('PLOTTING BOUNDARIES IN EXPORTS')
+        if bdry is True:
+            log.info('PLOTTING BOUNDARIES IN EXPORTS')
 
         # Insert logic for single and multi mode
         IMAGE_COLLECTION = BaseImageCollection(

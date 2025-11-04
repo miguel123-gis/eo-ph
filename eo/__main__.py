@@ -27,9 +27,8 @@ if __name__ == "__main__":
     log = logger('eo.log')
     log.info('STARTED EO')
 
-    dashboard = set_up_dask(dashboard=True)
+    cluster, client, dashboard = set_up_dask(dashboard=True)
     log.info(f'DASK DASHBOARD: {dashboard}')
-    webbrowser.open(dashboard)
 
     parser = argparse.ArgumentParser(
         description=("Get the best image/s based on XY and date range"),
