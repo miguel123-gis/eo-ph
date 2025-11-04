@@ -108,9 +108,10 @@
     <input type="text" id="frequency" name="frequency" placeholder="e.g. daily, weekly" required>
 
     <div class="checkbox-group">
-      <label><input type="checkbox" name="annotate"> Annotate</label>
       <label><input type="checkbox" name="all"> All</label>
-      <label><input type="checkbox" name="boundary"> Boundary</label>
+      <!-- Currently disabled due to buffer not working with annotate and boundary modes -->
+      <!-- <label><input type="checkbox" name="annotate"> Annotate</label> -->
+      <!-- <label><input type="checkbox" name="boundary"> Boundary</label> -->
     </div>
 
     <button type="submit">Run</button>
