@@ -1,9 +1,17 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import geopandas as gpd
 import rioxarray as rxr
 from eo.base_image import BaseImage
 from eo.utils import simplify_datetime, list_intersecting_municipalities
+
+# NOTE Since the rasters are Xarrays which triggers "lazy computation"/parallelization,
+#  Matplotlib raises a warning since it defaults to a GUI backend/viewer.
+#  There's no need for GUI backend viewer since rasters are directly annotated.
+#  https://stackoverflow.com/a/74471578/12779978
+matplotlib.use('agg')
+
 
 class AnnotatedImage:
     def __init__(
