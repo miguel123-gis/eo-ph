@@ -41,7 +41,6 @@ def call_download(data):
     lat = data.get("latitude")
     lon = data.get("longitude")
     buffer = data.get("buffer", 3)
-    log.info(buffer is True)
     mode = data.get("mode")
     # Optional arguments
     freq = data.get("frequency")
@@ -65,10 +64,9 @@ def call_download(data):
             log.info(f'RUNNING IN MULTI MODE, GETTING IMAGE WITH LEAST CLOUD COVER IN DATE RANGE {freq.upper()}')
             
         if buffer and int(buffer) > 0:
-            clip = True
             log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
         else:
-            clip = False
+            log.info(f'GETTING ENTIRE IMAGE INTERSECTING XY')
 
         # TODO Currently disabled due to plt.subplot() multithreading crash
         if all is True:
@@ -93,11 +91,17 @@ def call_download(data):
         log.info(f'GOT {len(IMAGE_RESULTS)} IMAGES TO SELECT FROM')
 
         if mode == 'single':
-            single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry) 
+            single.run(
+                IMAGE_RESULTS, float(lon), float(lat), float(buffer), 
+                annotate=annt, export_all=all, plot_boundary=bdry
+            ) 
             log.info('DONE RUN IN SINGLE MODE')
 
         elif mode == 'multi':
-            multi.run(image_selection=IMAGE_RESULTS, freq=freq, clip=clip, annt=annt, all=all, bdry=bdry)
+            multi.run(
+                IMAGE_RESULTS, float(lon), float(lat), float(buffer), freq,
+                annotate=annt, export_all=all, plot_boundary=bdry
+            )
             log.info('DONE RUN IN MULTI MODE')
     
         cluster.close()
