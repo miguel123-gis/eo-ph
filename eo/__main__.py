@@ -27,9 +27,8 @@ if __name__ == "__main__":
     log = logger('eo.log')
     log.info('STARTED EO')
 
-    dashboard = set_up_dask(dashboard=True)
+    cluster, client, dashboard = set_up_dask(dashboard=True)
     log.info(f'DASK DASHBOARD: {dashboard}')
-    webbrowser.open(dashboard)
 
     parser = argparse.ArgumentParser(
         description=("Get the best image/s based on XY and date range"),
@@ -52,15 +51,16 @@ if __name__ == "__main__":
 
     mode = args.mode
     freq = args.freq
-    tif = args.tif
-    bn = args.bn
-    lo = args.lo
-    up = args.up
-    up = args.up
     clip = args.clip
     annt = args.annt
     all = args.all
     bdry = args.bdry
+
+    # For histogram mode
+    # tif = args.tif
+    # bn = args.bn
+    # lo = args.lo
+    # up = args.up
 
     if mode == 'single':
         single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry, log=log)

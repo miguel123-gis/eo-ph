@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-def logger(log_file):
+def logger(log_file, to_console=False):
     Path(log_file).parent.mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger('eo_logger')
     logger.setLevel(logging.DEBUG)
@@ -16,12 +16,13 @@ def logger(log_file):
     file_handler.setFormatter(formatter)
 
     # Print to terminal
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
-    console_handler.setFormatter(formatter)
+    if to_console:
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.DEBUG)
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
 
     logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
 
     return logger
     
