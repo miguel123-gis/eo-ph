@@ -41,7 +41,6 @@ def call_download(data):
     lat = data.get("latitude")
     lon = data.get("longitude")
     buffer = data.get("buffer", 3)
-    log.info(buffer is True)
     mode = data.get("mode")
     # Optional arguments
     freq = data.get("frequency")
@@ -93,7 +92,10 @@ def call_download(data):
         log.info(f'GOT {len(IMAGE_RESULTS)} IMAGES TO SELECT FROM')
 
         if mode == 'single':
-            single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry) 
+            single.run(
+                IMAGE_RESULTS, float(lon), float(lat), float(buffer), 
+                clip=clip, annotate=annt, export_all=all, plot_boundary=bdry
+            ) 
             log.info('DONE RUN IN SINGLE MODE')
 
         elif mode == 'multi':
