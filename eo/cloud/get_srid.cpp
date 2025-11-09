@@ -2,6 +2,17 @@
 using namespace std;
 #include "gdal_priv.h"
 
+std::string getSRID(const GDALDataset *inDataset) {
+    const OGRSpatialReference *poSRS = inDataset->GetSpatialRef(); // Create a pointer to the SRID object where it's like tif_obj.GetSpatialRef()
+    char *pszWKT = nullptr; // Create a pointer again before computing it
+    poSRS->exportToPrettyWkt(&pszWKT); // Points to the pointer
+
+    std::string result(pszWKT); // Pass the spatialreference object to a string object
+    CPLFree(pszWKT); // Close/delete
+    
+    return result;
+}
+
 int main(int argc, const char* argv[]) {
     if (argc != 2) {    // If more than 2 args e.g. test some.tif another.tif
         return EINVAL;  // Common way to signal an error
@@ -15,13 +26,8 @@ int main(int argc, const char* argv[]) {
             GDALOpen(pszFilename, eAccess) // Open the provided TIF as read only - returns a GDALDataset object - https://gdal.org/en/stable/api/gdaldataset_cpp.html#_CPPv411GDALDataset
         )
     );
+
+    std::cout << getSRID(poDataset.get()); // Just gets the object, does not transfer ownership
     
-    // Get SRID
-    const OGRSpatialReference *poSRS = poDataset->GetSpatialRef(); // Create a pointer to the SRID object where it's like tif_obj.GetSpatialRef()
-    if (poSRS != NULL) {
-        char *pszWKT = NULL; // Create a pointer again before computing it
-        poSRS->exportToPrettyWkt(&pszWKT); // Points to the pointer
-        std::cout<<pszWKT; // No prefix because this is the actual object
-    }
     return 0;
 }
