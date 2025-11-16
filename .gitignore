@@ -15,3 +15,6 @@ data/processed/
 venv/
 
 eo.log
+
+eo/cloud/*
+!eo/cloud/*.cpp
