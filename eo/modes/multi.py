@@ -18,9 +18,7 @@ PH_BDRYS = CONFIG['ph_boundaries_gpkg']
 FIGSIZE = CONFIG['figure_size']
 DPI = CONFIG['dpi']
 
-def run(image_selection, longitude, latitude, buffer, freq, **kwargs):
-    image_selection = kwargs.get('image_selection')
-    frequency = kwargs.get('freq')
+def run(image_selection, longitude, latitude, buffer, frequency, **kwargs):
     annotate = kwargs.get('annt')
     export_all = kwargs.get('all')
     plot_boundary = kwargs.get('bdry')
