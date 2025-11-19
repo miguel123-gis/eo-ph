@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify, render_template
 from eo.logger import logger
 from eo.base_image_collection import BaseImageCollection
 from eo.image_utils import search_catalog
-from eo.utils import set_up_dask, load_config, safe_close
+from eo.utils import set_up_dask, safe_close
 from eo.modes import single, multi
 
 routes = Flask(__name__)
@@ -116,3 +116,6 @@ def call_download(data):
     
         cluster.close()
         client.close()
+
+if __name__ == "__main__":
+    routes.run(host='0.0.0.0')
