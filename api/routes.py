@@ -24,7 +24,7 @@ def download():
     
     return render_template('form.html')
 
-@routes.route('/api/download', methods=['POST'])
+@routes.route('/api/download', methods=['GET', 'POST'])
 def api_download():
     data = request.get_json(silent=True)
     

@@ -1,8 +1,8 @@
 *.code-workspace
 *.pyc
-config.yaml
 
 scratch/
+!scratch/payload.json
 !scratch/.gitkeep
 
 data/
@@ -18,6 +18,3 @@ eo.log
 
 eo/cloud/*
 !eo/cloud/*.cpp
-
-logs/
-!/logs/.gitkeep

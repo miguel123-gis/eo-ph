@@ -8,6 +8,7 @@ services:
       - "80:80"
     volumes:
       - ./data/processed:/eo-ph/data/processed
+      - ./logs:/eo-ph/logs
     extra_hosts:
       - "host.docker.internal:host-gateway"
     stdin_open: true    # equivalent to -i
@@ -16,6 +17,5 @@ services:
       sh -c "
         ln -s /etc/nginx/sites-available/eo-ph /etc/nginx/sites-enabled;
         /etc/init.d/nginx start;
-        gunicorn --bind 0.0.0.0:5001 --workers 4 wsgi:routes;
-      "
-                    
+        gunicorn --bind 0.0.0.0:5001 --error-logfile /eo-ph/logs/gunicorn-error.log --access-logfile /eo-ph/logs/gunicorn-access.log --workers 4 wsgi:routes;
+      "                    
