@@ -1,17 +1,23 @@
+# Directories
+processed_images_directory: data/processed
+ph_boundaries_gpkg: data/gadm36_PHL_2.gpkg
+
+# TODO Add as query args to API
+# Bands to get
 bands:
   red: B04
   green: B03
   blue: B02
 
 # Date range and location
-start_date: 2025-04-01
-end_date: 2025-04-30
-longitude: 123.30178949703331
-latitude: 13.513854650838848
+# start_date: 2015-01-01
+start_date: 2024-01-01
+end_date: 2025-12-30
+longitude: 124.64176985865824
+latitude: 8.465630088400024
 
-# Size of subset
-slice_start: 5000
-slice_end: 6000
+# Size of buffer/subset
+buffer_size_meters: 20
 
 # Processing after stacking bands
 lower_percentile: 1
@@ -19,5 +25,9 @@ upper_percentile: 99
 no_data_value: 0
 maximum_value: 255
 bit_depth: uint8
-gamma_correction: 1
+gamma_correction: 0.5
 chunk_size: 512
+
+# Annotation settings
+figure_size: 15
+dpi: 250

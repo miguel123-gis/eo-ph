@@ -52,7 +52,7 @@ def call_download(data):
     workers = data.get("workers")
 
     if workers is None:
-        workers = os.cpu_count-1
+        workers = os.cpu_count()-1
 
     if len(data) > 0:
         start_time = time.time()

@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  eo-ph:
+    image: eo-ph:latest
+    ports:
+      - "5001:5001"
+      - "80:80"
+    volumes:
+      - ./data/processed:/eo-ph/data/processed
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    stdin_open: true    # equivalent to -i
+    tty: true           # equivalent to -t
+    command: >
+      sh -c "
+        ln -s /etc/nginx/sites-available/eo-ph /etc/nginx/sites-enabled;
+        /etc/init.d/nginx start;
+        gunicorn --bind 0.0.0.0:5001 --workers 4 wsgi:routes;
+      "
+                    

@@ -18,7 +18,10 @@ RUN apt-get update && apt-get install -y \
     sudo \
     curl \
     lsof \
-    vim
+    vim \
+    nginx \
+    less \
+    procps
 
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
@@ -27,6 +30,10 @@ EXPOSE 5001
 
 ENV FLASK_APP=api/routes.py
 
-ENTRYPOINT ["flask"]
+COPY nginx.example /etc/nginx/sites-available/eo-ph
 
-CMD ["run", "--port", "5001", "--host", "0.0.0.0"]
+# COPY start.sh /eo-ph/start.sh
+
+# RUN chmod +x /eo-ph/start.sh
+
+# RUN /eo-ph/start.sh
