@@ -20,9 +20,9 @@ def safe_close(client, cluster):
     atexit.register(_cleanup)
     
 
-def set_up_dask(dashboard=False, num_workers=8, min_workers=4, max_workers=50):
+def set_up_dask(num_workers, dashboard=False, min_workers=4, max_workers=50):
     # cluster = LocalCluster(host="0.0.0.0", n_workers=num_workers)
-    cluster = LocalCluster() #
+    cluster = LocalCluster(n_workers=num_workers)
     client = Client(cluster)
 
     return (

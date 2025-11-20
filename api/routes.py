@@ -1,8 +1,10 @@
+import os
+import time
 from flask import Flask, request, jsonify, render_template
 from eo.logger import logger
 from eo.base_image_collection import BaseImageCollection
 from eo.image_utils import search_catalog
-from eo.utils import set_up_dask, load_config, safe_close
+from eo.utils import set_up_dask, safe_close
 from eo.modes import single, multi
 
 routes = Flask(__name__)
@@ -47,11 +49,16 @@ def call_download(data):
     annt = data.get("annotate")
     all = data.get("all")
     bdry = data.get("boundary")
+    workers = data.get("workers")
+
+    if workers is None:
+        workers = os.cpu_count()-1
 
     if len(data) > 0:
-        log.info('STARTED EO')
+        start_time = time.time()
+        log.info(f'STARTED EO WITH {workers} WORKERS')
         log.info(f"RECEIVED {data}")
-        cluster, client, dashboard = set_up_dask(dashboard=True)
+        cluster, client, dashboard = set_up_dask(dashboard=True, num_workers=int(workers))
         safe_close(client, cluster)
         
         log.info(f'DASK DASHBOARD: {dashboard}')
@@ -103,6 +110,12 @@ def call_download(data):
                 annotate=annt, export_all=all, plot_boundary=bdry
             )
             log.info('DONE RUN IN MULTI MODE')
+
+        end_time = time.time()
+        log.info(f"FINISHED IN {round(end_time-start_time, 2)} SECONDS")
     
         cluster.close()
         client.close()
+
+if __name__ == "__main__":
+    routes.run(host='0.0.0.0')
