@@ -1,11 +1,13 @@
 import argparse
 import os
+from pathlib import Path
 from eo.logger import logger
 from eo.base_image_collection import BaseImageCollection
 from eo.image_utils import search_catalog
 from eo.utils import set_up_dask, load_config
 from eo.modes import single, multi
 
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 CONFIG = load_config('config.yaml')
 
 START_DATE = CONFIG['start_date']
@@ -25,7 +27,7 @@ IMAGE_COLLECTION = BaseImageCollection(
 IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
 
 if __name__ == "__main__":
-    log = logger('eo.log')
+    log = logger(PROJECT_DIR / 'logs/eo.log')
     log.info('STARTED EO')
 
     cluster, client, dashboard = set_up_dask(dashboard=True, num_workers=os.cpu_count()-1)

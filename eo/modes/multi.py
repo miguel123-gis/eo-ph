@@ -1,5 +1,6 @@
 from pathlib import Path
 import numpy as np
+from eo.logger import logger
 from eo.base_image import BaseImage
 from eo.annotated_image import AnnotatedImage
 from eo.image_utils import get_best_images, get_bbox_from_point
@@ -7,6 +8,7 @@ from eo.utils import load_config
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent # eo-ph/
 CONFIG = load_config(PROJECT_DIR / 'config.yaml')
+log = logger(PROJECT_DIR / 'logs/eo.log')
 
 DTYPE_MAP = {
     'uint8': np.uint8,
@@ -28,8 +30,11 @@ def run(image_selection, longitude, latitude, buffer, frequency, **kwargs):
     bbox = get_bbox_from_point(longitude, latitude, 4326, 32651, buffer*1000)
     best_images = get_best_images(image_selection, frequency=frequency)
 
+    log.info(f'RUNNING IN MULTI MODE, GETTING IMAGE WITH LEAST CLOUD COVER IN DATE RANGE {frequency.upper()}')
+
     for image in best_images:
         if buffer > 0:
+            log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
             base_img = BaseImage(
                 image_item=image, 
                 band_nums=BANDS_SELECTION, 
@@ -38,8 +43,14 @@ def run(image_selection, longitude, latitude, buffer, frequency, **kwargs):
                 bbox=bbox
             )
         else:
+            log.info(f'GETTING ENTIRE IMAGE INTERSECTING XY')
             base_img = BaseImage(image_item=image, band_nums=BANDS_SELECTION, true_color=True)
         if annotate:
+            log.info('INCLUDING MAP ANNOTATIONS E.G. CAPTURE DATE, CLOUD COVER, ETC.')
+            
+            if plot_boundary:
+                log.info('PLOTTING BOUNDARIES IN EXPORTS')
+
             annt_img = AnnotatedImage(base_image=base_img)
             annt_img.annotate(
                 boundaries=PH_BDRYS, out_dir=PROCESSED_IMG_DIR, 
@@ -49,6 +60,7 @@ def run(image_selection, longitude, latitude, buffer, frequency, **kwargs):
             )
         else:
             if export_all:
+                log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
                 base_img.export(export_rgb=True, out_dir=PROCESSED_IMG_DIR)
             else:
                 base_img.export(out_dir=PROCESSED_IMG_DIR)

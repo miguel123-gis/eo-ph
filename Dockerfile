@@ -30,10 +30,6 @@ EXPOSE 5001
 
 ENV FLASK_APP=api/routes.py
 
+ENV TZ="Asia/Manila"
+
 COPY nginx.example /etc/nginx/sites-available/eo-ph
-
-# COPY start.sh /eo-ph/start.sh
-
-# RUN chmod +x /eo-ph/start.sh
-
-# RUN /eo-ph/start.sh

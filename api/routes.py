@@ -1,5 +1,6 @@
 import os
 import time
+from pathlib import Path
 from flask import Flask, request, jsonify, render_template
 from eo.logger import logger
 from eo.base_image_collection import BaseImageCollection
@@ -7,8 +8,10 @@ from eo.image_utils import search_catalog
 from eo.utils import set_up_dask, safe_close
 from eo.modes import single, multi
 
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+
 routes = Flask(__name__)
-log = logger('eo.log')
+log = logger(PROJECT_DIR / 'logs/eo.log')
 
 @routes.route('/')
 def hello():
@@ -64,26 +67,6 @@ def call_download(data):
         log.info(f'DASK DASHBOARD: {dashboard}')
 
         log.info(f'GETTING IMAGES INTERSECTING {lon}, {lat} FROM {start} TO {end}')
-
-        if mode == 'single':
-            log.info('RUNNING IN SINGLE MODE, ONLY GETTING THE IMAGE WITH LEAST CLOUD COVER IN DATE RANGE')
-        elif mode == 'multi' and freq:
-            log.info(f'RUNNING IN MULTI MODE, GETTING IMAGE WITH LEAST CLOUD COVER IN DATE RANGE {freq.upper()}')
-            
-        if buffer and int(buffer) > 0:
-            log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
-        else:
-            log.info(f'GETTING ENTIRE IMAGE INTERSECTING XY')
-
-        # TODO Currently disabled due to plt.subplot() multithreading crash
-        if all is True:
-            log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
-        
-        if annt is True:
-            log.info('INCLUDING MAP ANNOTATIONS E.G. CAPTURE DATE, CLOUD COVER, ETC.')
-
-        if bdry is True:
-            log.info('PLOTTING BOUNDARIES IN EXPORTS')
 
         # Insert logic for single and multi mode
         IMAGE_COLLECTION = BaseImageCollection(
