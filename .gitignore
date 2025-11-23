@@ -16,7 +16,7 @@ venv/
 
 eo.log
 
-eo/cloud/*
+eo/cloud/
 !eo/cloud/*.cpp
 
 logs/
