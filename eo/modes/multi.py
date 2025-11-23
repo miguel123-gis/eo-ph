@@ -1,10 +1,12 @@
+from pathlib import Path
 import numpy as np
 from eo.base_image import BaseImage
 from eo.annotated_image import AnnotatedImage
 from eo.image_utils import get_best_images, get_bbox_from_point
 from eo.utils import load_config
 
-CONFIG = load_config('config.yaml')
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent # eo-ph/
+CONFIG = load_config(PROJECT_DIR / 'config.yaml')
 
 DTYPE_MAP = {
     'uint8': np.uint8,
@@ -18,9 +20,7 @@ PH_BDRYS = CONFIG['ph_boundaries_gpkg']
 FIGSIZE = CONFIG['figure_size']
 DPI = CONFIG['dpi']
 
-def run(image_selection, longitude, latitude, buffer, freq, **kwargs):
-    image_selection = kwargs.get('image_selection')
-    frequency = kwargs.get('freq')
+def run(image_selection, longitude, latitude, buffer, frequency, **kwargs):
     annotate = kwargs.get('annt')
     export_all = kwargs.get('all')
     plot_boundary = kwargs.get('bdry')

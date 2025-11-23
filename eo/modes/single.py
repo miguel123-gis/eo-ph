@@ -1,10 +1,12 @@
+from pathlib import Path
 import numpy as np
 from eo.base_image import BaseImage
 from eo.annotated_image import AnnotatedImage
 from eo.image_utils import get_best_image, get_bbox_from_point
 from eo.utils import load_config
 
-CONFIG = load_config('config.yaml')
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent # eo-ph/
+CONFIG = load_config(PROJECT_DIR / 'config.yaml')
 
 DTYPE_MAP = {
     'uint8': np.uint8,
