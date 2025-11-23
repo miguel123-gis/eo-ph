@@ -1,5 +1,6 @@
 from pathlib import Path
 import numpy as np
+from celery import Celery
 from eo.base_image import BaseImage
 from eo.logger import logger
 from eo.annotated_image import AnnotatedImage
@@ -9,6 +10,11 @@ from eo.utils import load_config
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent # eo-ph/
 CONFIG = load_config(PROJECT_DIR / 'config.yaml')
 log = logger(PROJECT_DIR / 'logs/eo.log')
+celery = Celery(
+    __name__,
+    broker="redis://127.0.0.1:6379/0",
+    backend="redis://127.0.0.1:6379/0"
+)
 
 DTYPE_MAP = {
     'uint8': np.uint8,

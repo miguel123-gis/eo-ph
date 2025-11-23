@@ -21,7 +21,8 @@ RUN apt-get update && apt-get install -y \
     vim \
     nginx \
     less \
-    procps
+    procps \
+    redis-tools
 
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .

@@ -21,3 +21,5 @@ eo/cloud/*
 
 logs/
 !/logs/.gitkeep
+
+dump.rdb

@@ -1,10 +1,19 @@
 version: "3.9"
 
 services:
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis:/data
+    command: redis-server
   eo-ph:
     image: eo-ph:latest
     ports:
       - "5001:5001"
+      - "5555:5555"
       - "80:80"
     volumes:
       - ./data/processed:/eo-ph/data/processed
@@ -13,9 +22,12 @@ services:
       - "host.docker.internal:host-gateway"
     stdin_open: true    # equivalent to -i
     tty: true           # equivalent to -t
-    command: >
+    command: > # TODO Run flower in background also
       sh -c "
         ln -s /etc/nginx/sites-available/eo-ph /etc/nginx/sites-enabled;
         /etc/init.d/nginx start;
-        gunicorn --bind 0.0.0.0:5001 --error-logfile /eo-ph/logs/gunicorn-error.log --access-logfile /eo-ph/logs/gunicorn-access.log --workers 4 --timeout 120 wsgi:routes;
-      "                    
+        gunicorn --bind 0.0.0.0:5001 --error-logfile /eo-ph/logs/gunicorn-error.log --access-logfile /eo-ph/logs/gunicorn-access.log --workers 4 --timeout 120 wsgi:app --daemon;
+        celery -A app.routes.celery worker --logfile=/eo-ph/logs/celery.log --loglevel=INFO;
+      "
+    depends_on:
+      - redis
