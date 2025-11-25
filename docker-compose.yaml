@@ -27,7 +27,7 @@ services:
         ln -s /etc/nginx/sites-available/eo-ph /etc/nginx/sites-enabled;
         /etc/init.d/nginx start;
         gunicorn --bind 0.0.0.0:5001 --error-logfile /eo-ph/logs/gunicorn-error.log --access-logfile /eo-ph/logs/gunicorn-access.log --workers 4 --timeout 120 wsgi:app --daemon;
-        celery -A app.routes.celery worker --logfile=/eo-ph/logs/celery.log --loglevel=INFO;
+        celery -A app.routes.celery worker --logfile=/eo-ph/logs/celery.log --loglevel=INFO --pool=solo;
       "
     depends_on:
       - redis

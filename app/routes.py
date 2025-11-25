@@ -21,6 +21,7 @@ log = logger(PROJECT_DIR / 'logs/eo.log')
 
 @app.route('/')
 def hello():
+    test_celery.delay()
     return '<h1>Hello, World!</h1>'
 
 @app.route("/download", methods=['GET', 'POST'])
@@ -44,7 +45,7 @@ def api_download():
     
     if data is None:
         return jsonify({"status": "error", "message": 'No data received'})
-
+    
 @celery.task
 def call_download(data):
     # Required arguments
@@ -107,6 +108,10 @@ def call_download(data):
     
         cluster.close()
         client.close()
+
+@celery.task
+def test_celery():
+    log.info('CELERY IS WORKING')
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
