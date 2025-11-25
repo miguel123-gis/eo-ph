@@ -32,6 +32,8 @@ fonttools==4.60.0
 frozenlist==1.7.0
 fsspec==2025.9.0
 geopandas==1.1.1
+gevent==25.9.1
+greenlet==3.2.4
 gunicorn==23.0.0
 humanize==4.14.0
 idna==3.10
@@ -94,3 +96,5 @@ xarray==2025.9.0
 xyzservices==2025.4.0
 yarl==1.20.1
 zict==3.0.0
+zope.event==6.1
+zope.interface==8.1.1
