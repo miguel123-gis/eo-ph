@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CLI Frontend</title>
+  <title>Sentinel-2 Download Form</title>
   <link href="https://fonts.googleapis.com/css2?family=Aerial&display=swap" rel="stylesheet">
   <style>
     body {
@@ -80,7 +80,7 @@
 </head>
 <body>
   <form action="/download" method="POST" enctype="application/x-www-form-urlencoded">
-    <h2>CLI Web Form</h2>
+    <h2>Sentinel-2 Download Form</h2>
 
     <label for="latitude">Latitude</label>
     <input type="number" step="any" id="latitude" name="latitude" required>
@@ -105,7 +105,7 @@
     </select>
 
     <label for="frequency">Frequency</label>
-    <input type="text" id="frequency" name="frequency" placeholder="e.g. daily, weekly" required>
+    <input type="text" id="frequency" name="frequency" placeholder="e.g. monthly, quarterly, yearly" required>
 
     <div class="checkbox-group">
       <label><input type="checkbox" name="annotate"> Annotate</label>

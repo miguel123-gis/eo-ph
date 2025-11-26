@@ -1,17 +1,20 @@
 import argparse
-import webbrowser
+import os
+from pathlib import Path
 from eo.logger import logger
 from eo.base_image_collection import BaseImageCollection
 from eo.image_utils import search_catalog
 from eo.utils import set_up_dask, load_config
 from eo.modes import single, multi
 
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 CONFIG = load_config('config.yaml')
 
 START_DATE = CONFIG['start_date']
 END_DATE = CONFIG['end_date']
 LONGITUDE = float(CONFIG['longitude'])
 LATITUDE = float(CONFIG['latitude'])
+BUFFER = float(CONFIG['buffer_size_meters'])
 
 IMAGE_COLLECTION = BaseImageCollection(
     start_date = START_DATE,
@@ -24,10 +27,10 @@ IMAGE_COLLECTION = BaseImageCollection(
 IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
 
 if __name__ == "__main__":
-    log = logger('eo.log')
+    log = logger(PROJECT_DIR / 'logs/eo.log')
     log.info('STARTED EO')
 
-    cluster, client, dashboard = set_up_dask(dashboard=True)
+    cluster, client, dashboard = set_up_dask(dashboard=True, num_workers=os.cpu_count()-1)
     log.info(f'DASK DASHBOARD: {dashboard}')
 
     parser = argparse.ArgumentParser(
@@ -38,7 +41,6 @@ if __name__ == "__main__":
     parser.add_argument("--mode", required=True, type=str) # Single or multi
     parser.add_argument("--freq", required=False, type=str) # Monthly, yearly, etc.
     # Switches
-    parser.add_argument('--clip', default=False, action=argparse.BooleanOptionalAction) # Clip images
     parser.add_argument('--annt', default=False, action=argparse.BooleanOptionalAction) # Annotate images
     parser.add_argument('--all', default=False, action=argparse.BooleanOptionalAction) # Export all assets (true color and bands)
     parser.add_argument('--bdry', default=False, action=argparse.BooleanOptionalAction) # Plot boundaries
@@ -51,7 +53,6 @@ if __name__ == "__main__":
 
     mode = args.mode
     freq = args.freq
-    clip = args.clip
     annt = args.annt
     all = args.all
     bdry = args.bdry
@@ -63,10 +64,16 @@ if __name__ == "__main__":
     # up = args.up
 
     if mode == 'single':
-        single.run(image_selection=IMAGE_RESULTS, clip=clip, annt=annt, all=all, bdry=bdry, log=log)
+        single.run(
+                IMAGE_RESULTS, float(LONGITUDE), float(LATITUDE), float(BUFFER), 
+                annotate=annt, export_all=all, plot_boundary=bdry
+            ) 
 
     elif mode == 'multi':
-        multi.run(image_selection=IMAGE_RESULTS, freq=freq, clip=clip, annt=annt, all=all, bdry=bdry)
+        multi.run(
+                IMAGE_RESULTS, float(LONGITUDE), float(LATITUDE), float(BUFFER), freq,
+                annotate=annt, export_all=all, plot_boundary=bdry
+            )
 
     elif mode == 'hist':
         pass # Temporarily disable until AnnotatedImage is fully working

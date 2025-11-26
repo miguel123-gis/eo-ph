@@ -1,5 +1,7 @@
 import os
 import time
+from pathlib import Path
+from celery import Celery
 from flask import Flask, request, jsonify, render_template
 from eo.logger import logger
 from eo.base_image_collection import BaseImageCollection
@@ -7,35 +9,44 @@ from eo.image_utils import search_catalog
 from eo.utils import set_up_dask, safe_close
 from eo.modes import single, multi
 
-routes = Flask(__name__)
-log = logger('eo.log')
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 
-@routes.route('/')
+app = Flask(__name__)
+celery = Celery(
+    __name__,
+    broker="redis://redis:6379/0", # TODO Add this as a config e.g. if ran in local then broker="redis://127.0.0.1:6379/0",
+    backend="redis://redis:6379/0"
+)
+log = logger(PROJECT_DIR / 'logs/eo.log')
+
+@app.route('/')
 def hello():
+    test_celery.delay()
     return '<h1>Hello, World!</h1>'
 
-@routes.route("/download", methods=['GET', 'POST'])
+@app.route("/download", methods=['GET', 'POST'])
 def download():
     data = request.form.to_dict()
 
     if len(data) > 0:
         log.info('CALLING FROM /download')
-        call_download(data)
+        call_download.delay(data)
     
     return render_template('form.html')
 
-@routes.route('/api/download', methods=['POST'])
+@app.route('/api/download', methods=['GET', 'POST'])
 def api_download():
     data = request.get_json(silent=True)
     
     if len(data) > 0:
         log.info('CALLING FROM /api/download')
-        call_download(data)
+        call_download.delay(data)
         return jsonify({"status": "ok", "received": data})
     
     if data is None:
         return jsonify({"status": "error", "message": 'No data received'})
-
+    
+@celery.task
 def call_download(data):
     # Required arguments
     start = data.get("start_date")
@@ -65,26 +76,6 @@ def call_download(data):
 
         log.info(f'GETTING IMAGES INTERSECTING {lon}, {lat} FROM {start} TO {end}')
 
-        if mode == 'single':
-            log.info('RUNNING IN SINGLE MODE, ONLY GETTING THE IMAGE WITH LEAST CLOUD COVER IN DATE RANGE')
-        elif mode == 'multi' and freq:
-            log.info(f'RUNNING IN MULTI MODE, GETTING IMAGE WITH LEAST CLOUD COVER IN DATE RANGE {freq.upper()}')
-            
-        if buffer and int(buffer) > 0:
-            log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
-        else:
-            log.info(f'GETTING ENTIRE IMAGE INTERSECTING XY')
-
-        # TODO Currently disabled due to plt.subplot() multithreading crash
-        if all is True:
-            log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
-        
-        if annt is True:
-            log.info('INCLUDING MAP ANNOTATIONS E.G. CAPTURE DATE, CLOUD COVER, ETC.')
-
-        if bdry is True:
-            log.info('PLOTTING BOUNDARIES IN EXPORTS')
-
         # Insert logic for single and multi mode
         IMAGE_COLLECTION = BaseImageCollection(
             start_date = start,
@@ -98,6 +89,7 @@ def call_download(data):
         log.info(f'GOT {len(IMAGE_RESULTS)} IMAGES TO SELECT FROM')
 
         if mode == 'single':
+
             single.run(
                 IMAGE_RESULTS, float(lon), float(lat), float(buffer), 
                 annotate=annt, export_all=all, plot_boundary=bdry
@@ -117,5 +109,9 @@ def call_download(data):
         cluster.close()
         client.close()
 
+@celery.task
+def test_celery():
+    log.info('CELERY IS WORKING')
+
 if __name__ == "__main__":
-    routes.run(host='0.0.0.0')
+    app.run(host='0.0.0.0')

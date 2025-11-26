@@ -1,51 +1,66 @@
-Download a Sentinel-2A/2B image per month/quarter/year 
-via Planetary Computer
+Download Sentinel-2A/2B images per month/quarter/year via Planetary Computer API (for Philippines only)
 ---
+Created this simple downloader since I'm studying Remote Sensing and wanted to make downloading and clipping images faster.
+
 Annotated images (not georeferenced, in PNG) of Payatas, Quezon City from 2015-2025
 ![payatas](misc/payatas.gif)
 
 True color TIFs of Davao Bypass Road, Davao City from 2015-2025
 ![payatas](misc/davao.gif)
 
-### Usage
+## Usage
 1. Clone repo
-2. Create venv
-4. Create a `config.yaml` from the sample file
-5. Run `docker build -t s2-downloader .` to build image
-6. Run to test
+2. Build images - `docker compose build`
+3. Start containers - `docker compose up --detach`
+4. You should see 3 containers - `docker ps` like
 ```
-docker run -it -v $(pwd)/data/processed:/eo-ph/data/processed -p8787:8787 s2-downloader --mode=single --clip
+IMAGE        ... PORTS                                        NAMES
+eo-ph:latest ... 5001/tcp, 0.0.0.0:5555->5555/tcp             celery_worker
+eo-ph:latest ... 0.0.0.0:80->80/tcp, 0.0.0.0:5001->5001/tcp   eo-ph
+redis:latest ... 0.0.0.0:6379->6379/tcp                       redis
 ```
-7. Check http://localhost:8787/workers to see workers in action
+5. All logs are stored in `/logs`
 
+### UI
+Go to http://localhost/download and input the forms like below
+![alt text](misc/sample_form.png)
 
-
-#### Sample arguments
+### API
+You can call it via the `api/download` POST endpoint with the sample payload and CURL call below
 ```
-# Get the image with least cloud cover per year from years XX to XX, clip it given the buffer size, and export the annoted images
-<docker command> --mode=multi --clip --annt
-
-# Plot the municipal boundaries in the output annotated image
-<docker command> --mode=multi --clip --annt --bdry
-
-# Export the raster/true color TIF instead
-<docker command> --mode=multi --clip
-
-# Get image per quater instead of per year (default)
-<docker command> --mode=multi --clip --freq=quarterly
-
-# Only get the image with least cloud cover within the entire date range
-<docker command> --mode=single --clip
-
-# Export all assets (true color and individual bands e.g red, green, blue)
-# Cannot be used with --annt
-<docker command> --mode=single --clip --all
+curl -X POST -H "Content-Type: application/json" --data @scratch/payload.json http://localhost/api/download
 ```
 
+```
+# payload.json
+{
+    "start_date": "2015-01-01",
+    "end_date": "2021-12-30",
+    "latitude": "8.465630088400024",
+    "longitude": "124.64176985865824",
+    "buffer": "3",
+    "frequency": "yearly",
+    "mode": "multi",
+    "annotate": false,
+    "boundary": false,
+    "all": false,
+    "workers": 9
+}
+```
 
+### CLI
+Not well documented but you can do `python -m eo --help` to see arguments.
 
-#### Configuration
-* `bands` - bands to get (will differ per platform e.g. Landsat, Sentinel, etc.)
-* `start_date` and `end_date` - date range to search in Sentinel-2 collection
-* `latitude` and `longitude` - XY to use to intersect against Sentinel-2 collection
-* `buffer_size_meters` - size of circular buffer that will clip the image/raster 
+## Outputs
+All output images will go to `data/processed`
+
+## Configuration
+If **mode is single**, it will get the least cloudy image in the date range.
+
+If **mode is multi**, it will get the least cloudy image per month/quarter/year (based on value of frequency).
+
+If **annotate** is ticked/true, it will write details in the map and output is a simple PNG and not georeferenced.
+
+If **boundary** is ticked/true, it will overlay the municipal/provincial boundaries.
+
+If **all** is true, it will export the RGB, Red, Green, Blue TIFs.
