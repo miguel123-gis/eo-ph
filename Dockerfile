@@ -30,7 +30,7 @@ COPY . .
 EXPOSE 5001
 
 ENV FLASK_APP=api/routes.py
-
 ENV TZ="Asia/Manila"
+ENV PYTHONPATH=/eo-ph
 
 COPY nginx.example /etc/nginx/sites-available/eo-ph

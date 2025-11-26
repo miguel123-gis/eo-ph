@@ -30,7 +30,7 @@ def download():
 
     if len(data) > 0:
         log.info('CALLING FROM /download')
-        call_download(data)
+        call_download.delay(data)
     
     return render_template('form.html')
 
