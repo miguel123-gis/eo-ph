@@ -22,9 +22,6 @@ colorlog==6.9.0
 contourpy==1.3.3
 cryptography==46.0.1
 cycler==0.12.1
-dask==2025.9.1
-dask-gateway==2025.4.0
-distributed==2025.9.1
 duckdb==1.4.0
 Flask==3.1.2
 flower==2.0.1
