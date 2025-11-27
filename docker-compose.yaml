@@ -33,6 +33,7 @@ services:
     container_name: celery_worker
     image: eo-ph:latest
     volumes:
+      - ./data/processed:/eo-ph/data/processed
       - ./logs:/eo-ph/logs
     ports:
       - "5555:5555"
