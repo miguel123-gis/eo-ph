@@ -1,4 +1,3 @@
-import os
 import time
 from pathlib import Path
 from celery import Celery
@@ -6,7 +5,7 @@ from flask import Flask, request, jsonify, render_template
 from eo.logger import logger
 from eo.base_image_collection import BaseImageCollection
 from eo.image_utils import search_catalog
-from eo.modes import single, multi
+from eo.modes import basic
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -53,7 +52,6 @@ def call_download(data):
     lat = data.get("latitude")
     lon = data.get("longitude")
     buffer = data.get("buffer", 3)
-    mode = data.get("mode")
     # Optional arguments
     freq = data.get("frequency")
     annt = data.get("annotate")
@@ -65,7 +63,6 @@ def call_download(data):
 
         log.info(f'GETTING IMAGES INTERSECTING {lon}, {lat} FROM {start} TO {end}')
 
-        # Insert logic for single and multi mode
         IMAGE_COLLECTION = BaseImageCollection(
             start_date = start,
             end_date = end,
@@ -77,21 +74,11 @@ def call_download(data):
         IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
         log.info(f'GOT {len(IMAGE_RESULTS)} IMAGES TO SELECT FROM')
 
-        if mode == 'single':
-
-            single.run(
-                IMAGE_RESULTS, float(lon), float(lat), float(buffer), 
-                annotate=annt, export_all=all, plot_boundary=bdry
-            ) 
-            log.info('DONE RUN IN SINGLE MODE')
-
-        elif mode == 'multi':
-            multi.run(
-                IMAGE_RESULTS, float(lon), float(lat), float(buffer), freq,
-                annotate=annt, export_all=all, plot_boundary=bdry
-            )
-            log.info('DONE RUN IN MULTI MODE')
-
+        basic.run(
+            IMAGE_RESULTS, float(lon), float(lat), float(buffer), frequency=freq,
+            annotate=annt, export_all=all, plot_boundary=bdry
+        ) 
+    
         end_time = time.time()
         log.info(f"FINISHED IN {round(end_time-start_time, 2)} SECONDS")
     

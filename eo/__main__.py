@@ -1,11 +1,11 @@
 import argparse
-import os
+import time
 from pathlib import Path
 from eo.logger import logger
 from eo.base_image_collection import BaseImageCollection
 from eo.image_utils import search_catalog
 from eo.utils import load_config
-from eo.modes import single, multi
+from eo.modes import basic
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 CONFIG = load_config('config.yaml')
@@ -27,6 +27,7 @@ IMAGE_COLLECTION = BaseImageCollection(
 IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
 
 if __name__ == "__main__":
+    start_time = time.time()
     log = logger(PROJECT_DIR / 'logs/eo.log')
     log.info('STARTED EO')
 
@@ -35,7 +36,7 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument("--mode", required=True, type=str) # Single or multi
+    parser.add_argument("--mode", required=True, type=str) # Basic or histogram (currently disabled)
     parser.add_argument("--freq", required=False, type=str) # Monthly, yearly, etc.
     # Switches
     parser.add_argument('--annt', default=False, action=argparse.BooleanOptionalAction) # Annotate images
@@ -60,19 +61,15 @@ if __name__ == "__main__":
     # lo = args.lo
     # up = args.up
 
-    if mode == 'single':
-        single.run(
-                IMAGE_RESULTS, float(LONGITUDE), float(LATITUDE), float(BUFFER), 
-                annotate=annt, export_all=all, plot_boundary=bdry
-            ) 
-
-    elif mode == 'multi':
-        multi.run(
-                IMAGE_RESULTS, float(LONGITUDE), float(LATITUDE), float(BUFFER), freq,
-                annotate=annt, export_all=all, plot_boundary=bdry
-            )
+    if mode == 'basic':
+        basic.run(
+            IMAGE_RESULTS, float(LONGITUDE), float(LATITUDE), float(BUFFER), frequency=freq,
+            annotate=annt, export_all=all, plot_boundary=bdry
+        ) 
 
     elif mode == 'hist':
         pass # Temporarily disable until AnnotatedImage is fully working
         # hist.run(bn=bn, tif=tif, lo=lo, up=up, out=out)
-        
+
+    end_time = time.time()
+    log.info(f"FINISHED IN {round(end_time-start_time, 2)} SECONDS")
