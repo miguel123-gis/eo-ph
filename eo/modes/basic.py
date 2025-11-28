@@ -1,20 +1,17 @@
+import time
 from pathlib import Path
 import numpy as np
-from celery import Celery
 from eo.base_image import BaseImage
-from eo.logger import logger
+from eo.base_image_collection import BaseImageCollection
 from eo.annotated_image import AnnotatedImage
-from eo.image_utils import get_best_image, get_best_images, get_bbox_from_point
+from eo.logger import logger
+from eo.image_utils import get_best_image, get_best_images, get_bbox_from_point, search_catalog
 from eo.utils import load_config
+from eo.constants import REQUIRED_PARAMETERS
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent # eo-ph/
 CONFIG = load_config(PROJECT_DIR / 'config.yaml')
 log = logger(PROJECT_DIR / 'logs/eo.log')
-celery = Celery(
-    __name__,
-    broker="redis://127.0.0.1:6379/0",
-    backend="redis://127.0.0.1:6379/0"
-)
 
 DTYPE_MAP = {
     'uint8': np.uint8,
@@ -28,52 +25,85 @@ PH_BDRYS = CONFIG['ph_boundaries_gpkg']
 FIGSIZE = CONFIG['figure_size']
 DPI = CONFIG['dpi']
 
-def run(image_selection, longitude, latitude, buffer, **kwargs):
-    annotate = kwargs.get('annt')
-    export_all = kwargs.get('all')
-    plot_boundary = kwargs.get('bdry')
-    frequency = kwargs.get('frequency')
-    assets = {**BANDS_SELECTION, 'true_color': 'visual'}
-    bbox = get_bbox_from_point(longitude, latitude, 4326, 32651, buffer*1000)
+class BasicMode:
+    def __init__(self, parameters):
+        self.parameters = parameters
 
-    if frequency:
-        log.info('RUNNING IN MULTI MODE')
-        best_images = get_best_images(image_selection, frequency=frequency)
-    else:
-        log.info('RUNNING IN SINGLE MODE')
-        best_images = [get_best_image(image_selection)] # Put in list to be compatible with logic downstream
+        self.image_selection = None
+        if self.image_selection is None:
+            self.image_selection = self._image_selection()
 
-
-    for image in best_images:
-        if buffer > 0:
-            log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
-            base_img = BaseImage(
-                    image_item=image, 
-                    band_nums=BANDS_SELECTION, 
-                    subset=True, 
-                    assets=assets, 
-                    bbox=bbox
-                )
-        else:
-            log.info(f'GETTING ENTIRE IMAGE INTERSECTING XY')
-            base_img = BaseImage(image_item=image, band_nums=BANDS_SELECTION, true_color=True) 
-            
-        if annotate:
-            log.info('INCLUDING MAP ANNOTATIONS E.G. CAPTURE DATE, CLOUD COVER, ETC.')
-
-            if plot_boundary:
-                log.info('PLOTTING BOUNDARIES IN EXPORTS')
-                
-            annt_img = AnnotatedImage(base_image=base_img)
-            annt_img.annotate(
-                boundaries=PH_BDRYS, out_dir=PROCESSED_IMG_DIR, 
-                lon=longitude, lat=latitude,
-                plot_bdry=plot_boundary,
-                figsize=FIGSIZE, dpi=DPI
+    def _image_selection(self):
+        return search_catalog(
+            BaseImageCollection(
+                start_date = self.parameters.get('start_date'),
+                end_date = self.parameters.get('end_date'),
+                lon = self.parameters.get('longitude'),
+                lat = self.parameters.get('latitude'),
+                collection = 'sentinel-2-l2a'
             )
+        )
+
+    def check_parameters(self):
+        if not all([rp in self.parameters for rp in REQUIRED_PARAMETERS]):
+            raise KeyError('Input parameters is incomplete')
+        
+    def run(self):
+        self.check_parameters()
+        start_time = time.time()
+        latitude = self.parameters.get('latitude')
+        longitude = self.parameters.get('longitude')
+        buffer = float(self.parameters.get('buffer'))
+        frequency = self.parameters.get('frequency')
+        annotate = self.parameters.get('annotate')
+        boundary = self.parameters.get('boundary')
+        all = self.parameters.get('all')
+        assets = {**BANDS_SELECTION, 'true_color': 'visual'}
+        bbox = get_bbox_from_point(longitude, latitude, 4326, 32651, buffer*1000)
+        
+        log.info(f'PAYLOAD: {self.parameters}')
+        log.info(f'GOT {len(self.image_selection)} IMAGES TO SELECT FROM')
+
+        if frequency:
+            log.info('RUNNING IN MULTI MODE')
+            best_images = get_best_images(self.image_selection, frequency=frequency)
         else:
-            if export_all:
-                log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
-                base_img.export(export_rgb=True, out_dir=PROCESSED_IMG_DIR)
+            log.info('RUNNING IN SINGLE MODE')
+            best_images = [get_best_image(self.image_selection)] # Put in list to be compatible with logic downstream
+
+
+        for image in best_images:
+            if buffer > 0:
+                log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
+                base_img = BaseImage(
+                        image_item=image, 
+                        band_nums=BANDS_SELECTION, 
+                        subset=True, 
+                        assets=assets, 
+                        bbox=bbox
+                    )
             else:
-                base_img.export(out_dir=PROCESSED_IMG_DIR)
+                log.info(f'GETTING ENTIRE IMAGE INTERSECTING XY')
+                base_img = BaseImage(image_item=image, band_nums=BANDS_SELECTION, true_color=True) 
+                
+            if annotate:
+                log.info('INCLUDING MAP ANNOTATIONS E.G. CAPTURE DATE, CLOUD COVER, ETC.')
+
+                if boundary:
+                    log.info('PLOTTING BOUNDARIES IN EXPORTS')
+                    
+                annt_img = AnnotatedImage(base_image=base_img)
+                annt_img.annotate(
+                    boundaries=PH_BDRYS, out_dir=PROCESSED_IMG_DIR, 
+                    lon=longitude, lat=latitude,
+                    plot_bdry=boundary,
+                    figsize=FIGSIZE, dpi=DPI
+                )
+            else:
+                if all:
+                    log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
+                    base_img.export(export_rgb=True, out_dir=PROCESSED_IMG_DIR)
+                else:
+                    base_img.export(out_dir=PROCESSED_IMG_DIR)
+        end_time = time.time()
+        log.info(f"FINISHED IN {round(end_time-start_time, 2)} SECONDS")

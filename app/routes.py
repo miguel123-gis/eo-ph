@@ -1,11 +1,9 @@
-import time
+
 from pathlib import Path
 from celery import Celery
 from flask import Flask, request, jsonify, render_template
 from eo.logger import logger
-from eo.base_image_collection import BaseImageCollection
-from eo.image_utils import search_catalog
-from eo.modes import basic
+from eo.modes.basic import BasicMode
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -46,41 +44,11 @@ def api_download():
     
 @celery.task
 def call_download(data):
-    # Required arguments
-    start = data.get("start_date")
-    end = data.get("end_date")
-    lat = data.get("latitude")
-    lon = data.get("longitude")
-    buffer = data.get("buffer", 3)
-    # Optional arguments
-    freq = data.get("frequency")
-    annt = data.get("annotate")
-    all = data.get("all")
-    bdry = data.get("boundary")
-
     if len(data) > 0:
-        start_time = time.time()
-
-        log.info(f'GETTING IMAGES INTERSECTING {lon}, {lat} FROM {start} TO {end}')
-
-        IMAGE_COLLECTION = BaseImageCollection(
-            start_date = start,
-            end_date = end,
-            lon = lon,
-            lat = lat,
-            collection = 'sentinel-2-l2a'
-        )
-
-        IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
-        log.info(f'GOT {len(IMAGE_RESULTS)} IMAGES TO SELECT FROM')
-
-        basic.run(
-            IMAGE_RESULTS, float(lon), float(lat), float(buffer), frequency=freq,
-            annotate=annt, export_all=all, plot_boundary=bdry
-        ) 
-    
-        end_time = time.time()
-        log.info(f"FINISHED IN {round(end_time-start_time, 2)} SECONDS")
+        basic_mode = BasicMode(data)
+        basic_mode.run()
+    else:
+        raise ValueError('Empty/incomplete payload')
     
 @celery.task
 def test_celery():

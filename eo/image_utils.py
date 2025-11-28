@@ -29,10 +29,7 @@ def search_catalog(imgcol: BaseImageCollection) -> pystac.item.Item:
         datetime=date_range
     )
 
-    search_results = search.item_collection()
-
-    return search_results
-    
+    return search.item_collection()
 
 def get_best_image(image_selection) -> pystac.item.Item:
     """Selects the image with the lowest cloud cover from the image collection."""
