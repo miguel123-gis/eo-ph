@@ -51,6 +51,11 @@ class BasicMode:
     def run(self):
         self.check_parameters()
         start_time = time.time()
+
+        if len(self.image_selection) == 0:
+            log.error('ZERO IMAGES FOUND BASED ON PAYLOAD')
+            raise ValueError('ZERO IMAGES FOUND BASED ON PAYLOAD')
+        
         latitude = self.parameters.get('latitude')
         longitude = self.parameters.get('longitude')
         buffer = float(self.parameters.get('buffer'))

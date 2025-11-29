@@ -48,6 +48,7 @@ def call_download(data):
         basic_mode = BasicMode(data)
         basic_mode.run()
     else:
+        log.error('Empty/incomplete payload', exc_info=True)
         raise ValueError('Empty/incomplete payload')
     
 @celery.task
