@@ -1,6 +1,6 @@
 
 from pathlib import Path
-from celery import Celery
+from celery import Celery, result
 from flask import Flask, request, jsonify, render_template
 from eo.logger import logger
 from eo.modes.basic import BasicMode
@@ -36,20 +36,29 @@ def api_download():
     
     if len(data) > 0:
         log.info('CALLING FROM /api/download')
-        call_download.delay(data)
-        return jsonify({"status": "ok", "received": data})
+        async_task = call_download.delay(data)
+        return jsonify({"status": "ok", "received": data, "async_id": async_task.id})
     
     if data is None:
-        return jsonify({"status": "error", "message": 'No data received'})
+        return jsonify({"status": "error", "message": 'No data received', "async_id": async_task.id})
     
-@celery.task
-def call_download(data):
-    if len(data) > 0:
-        basic_mode = BasicMode(data)
-        basic_mode.run()
-    else:
-        log.error('Empty/incomplete payload', exc_info=True)
-        raise ValueError('Empty/incomplete payload')
+@celery.task(bind=True)
+def call_download(self, data):
+    with app.app_context():
+        if len(data) > 0:
+            task_id = self.request.id
+            log.info(f"TASK ID: {task_id}")
+
+            try:
+                basic_mode = BasicMode(data)
+                basic_mode.run()
+                log.info(f"TASK {task_id}: {result.AsyncResult(task_id).state}") # TODO Task state is always pending, see https://stackoverflow.com/questions/27357732/celery-task-always-pending
+            except Exception as e:
+                log.error(f"TASK {task_id}: {result.AsyncResult(task_id).state}", exc_info=True)
+
+        else:
+            log.error('Empty/incomplete payload', exc_info=True)
+            raise ValueError('Empty/incomplete payload')
     
 @celery.task
 def test_celery():
