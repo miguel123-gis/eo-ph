@@ -1,30 +1,21 @@
 import argparse
-import os
 from pathlib import Path
 from eo.logger import logger
-from eo.base_image_collection import BaseImageCollection
-from eo.image_utils import search_catalog
 from eo.utils import load_config
-from eo.modes import single, multi
+from eo.modes.basic import BasicMode
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
-CONFIG = load_config('config.yaml')
+CONFIG = load_config('config.yaml') # TODO Add handle if config.yaml is not existing
 
 START_DATE = CONFIG['start_date']
 END_DATE = CONFIG['end_date']
 LONGITUDE = float(CONFIG['longitude'])
 LATITUDE = float(CONFIG['latitude'])
 BUFFER = float(CONFIG['buffer_size_meters'])
-
-IMAGE_COLLECTION = BaseImageCollection(
-    start_date = START_DATE,
-    end_date = END_DATE,
-    lon = LONGITUDE,
-    lat = LATITUDE,
-    collection = 'sentinel-2-l2a'
-)
-
-IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
+FREQUENCY = CONFIG['frequency']
+ANNOTATE = CONFIG['annotate']
+BOUNDARY = CONFIG['boundary']
+ALL = CONFIG['all']
 
 if __name__ == "__main__":
     log = logger(PROJECT_DIR / 'logs/eo.log')
@@ -35,44 +26,34 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument("--mode", required=True, type=str) # Single or multi
-    parser.add_argument("--freq", required=False, type=str) # Monthly, yearly, etc.
-    # Switches
-    parser.add_argument('--annt', default=False, action=argparse.BooleanOptionalAction) # Annotate images
-    parser.add_argument('--all', default=False, action=argparse.BooleanOptionalAction) # Export all assets (true color and bands)
-    parser.add_argument('--bdry', default=False, action=argparse.BooleanOptionalAction) # Plot boundaries
     # For histogram mode
+    parser.add_argument("--hist", required=False, type=str)
     parser.add_argument("--tif", required=False, type=str)
     parser.add_argument("--bn", required=False, type=str)
     parser.add_argument("--lo", required=False, type=str)
     parser.add_argument("--up", required=False, type=bool)
     args = parser.parse_args()
 
-    mode = args.mode
-    freq = args.freq
-    annt = args.annt
-    all = args.all
-    bdry = args.bdry
-
+    # NOTE # Temporarily disabled until AnnotatedImage is fully working
     # For histogram mode
+    # hist = args.hist
     # tif = args.tif
     # bn = args.bn
     # lo = args.lo
     # up = args.up
-
-    if mode == 'single':
-        single.run(
-                IMAGE_RESULTS, float(LONGITUDE), float(LATITUDE), float(BUFFER), 
-                annotate=annt, export_all=all, plot_boundary=bdry
-            ) 
-
-    elif mode == 'multi':
-        multi.run(
-                IMAGE_RESULTS, float(LONGITUDE), float(LATITUDE), float(BUFFER), freq,
-                annotate=annt, export_all=all, plot_boundary=bdry
-            )
-
-    elif mode == 'hist':
-        pass # Temporarily disable until AnnotatedImage is fully working
+    # if hist: 
         # hist.run(bn=bn, tif=tif, lo=lo, up=up, out=out)
-        
+
+    log.info('CALLING VIA CLI')
+    basic_mode = BasicMode({
+        "start_date": START_DATE,
+        "end_date": END_DATE,
+        "latitude": LATITUDE,
+        "longitude": LONGITUDE,
+        "buffer": BUFFER,
+        "frequency": FREQUENCY,
+        "annotate": ANNOTATE,
+        "boundary": BOUNDARY,
+        "all": ALL
+    })
+    basic_mode.run()

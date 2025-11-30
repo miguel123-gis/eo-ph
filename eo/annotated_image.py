@@ -60,7 +60,7 @@ class AnnotatedImage:
         capture_date = simplify_datetime(self.image_properties['datetime'])
         platform = self.image_properties['platform']
         cloud_cover = self.image_properties['eo:cloud_cover']
-        map_center = f"{round(lon, 3)}, {round(lat, 3)}"
+        map_center = f"{round(float(lon), 3)}, {round(float(lat), 3)}"
         munis = ','.join(list_intersecting_municipalities(clipped_bdrys)['towns'])
         province = list_intersecting_municipalities(clipped_bdrys)['province']
         

@@ -31,8 +31,8 @@ You can call it via the `api/download` POST endpoint with the sample payload and
 curl -X POST -H "Content-Type: application/json" --data @scratch/payload.json http://localhost/api/download
 ```
 
+Sample payload.json file - set `frequency` to false if running in "single mode"
 ```
-# payload.json
 {
     "start_date": "2015-01-01",
     "end_date": "2021-12-30",
@@ -40,7 +40,6 @@ curl -X POST -H "Content-Type: application/json" --data @scratch/payload.json ht
     "longitude": "124.64176985865824",
     "buffer": "3",
     "frequency": "yearly",
-    "mode": "multi",
     "annotate": false,
     "boundary": false,
     "all": false,
@@ -55,9 +54,9 @@ Not well documented but you can do `python -m eo --help` to see arguments.
 All output images will go to `data/processed`
 
 ## Configuration
-If **mode is single**, it will get the least cloudy image in the date range.
+If **frequency is false**, it will get the least cloudy image in the date range.
 
-If **mode is multi**, it will get the least cloudy image per month/quarter/year (based on value of frequency).
+Else, it will get the least cloudy image per month/quarter/year in the date range.
 
 If **annotate** is ticked/true, it will write details in the map and output is a simple PNG and not georeferenced.
 

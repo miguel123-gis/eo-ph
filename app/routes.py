@@ -1,12 +1,9 @@
-import os
-import time
+
 from pathlib import Path
-from celery import Celery
+from celery import Celery, result
 from flask import Flask, request, jsonify, render_template
 from eo.logger import logger
-from eo.base_image_collection import BaseImageCollection
-from eo.image_utils import search_catalog
-from eo.modes import single, multi
+from eo.modes.basic import BasicMode
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,61 +36,29 @@ def api_download():
     
     if len(data) > 0:
         log.info('CALLING FROM /api/download')
-        call_download.delay(data)
-        return jsonify({"status": "ok", "received": data})
+        async_task = call_download.delay(data)
+        return jsonify({"status": "ok", "received": data, "async_id": async_task.id})
     
     if data is None:
-        return jsonify({"status": "error", "message": 'No data received'})
+        return jsonify({"status": "error", "message": 'No data received', "async_id": async_task.id})
     
-@celery.task
-def call_download(data):
-    # Required arguments
-    start = data.get("start_date")
-    end = data.get("end_date")
-    lat = data.get("latitude")
-    lon = data.get("longitude")
-    buffer = data.get("buffer", 3)
-    mode = data.get("mode")
-    # Optional arguments
-    freq = data.get("frequency")
-    annt = data.get("annotate")
-    all = data.get("all")
-    bdry = data.get("boundary")
+@celery.task(bind=True)
+def call_download(self, data):
+    with app.app_context():
+        if len(data) > 0:
+            task_id = self.request.id
+            log.info(f"TASK ID: {task_id}")
 
-    if len(data) > 0:
-        start_time = time.time()
+            try:
+                basic_mode = BasicMode(data)
+                basic_mode.run()
+                log.info(f"TASK {task_id}: {result.AsyncResult(task_id).state}") # TODO Task state is always pending, see https://stackoverflow.com/questions/27357732/celery-task-always-pending
+            except Exception as e:
+                log.error(f"TASK {task_id}: {result.AsyncResult(task_id).state}", exc_info=True)
 
-        log.info(f'GETTING IMAGES INTERSECTING {lon}, {lat} FROM {start} TO {end}')
-
-        # Insert logic for single and multi mode
-        IMAGE_COLLECTION = BaseImageCollection(
-            start_date = start,
-            end_date = end,
-            lon = lon,
-            lat = lat,
-            collection = 'sentinel-2-l2a'
-        )
-
-        IMAGE_RESULTS = search_catalog(IMAGE_COLLECTION)
-        log.info(f'GOT {len(IMAGE_RESULTS)} IMAGES TO SELECT FROM')
-
-        if mode == 'single':
-
-            single.run(
-                IMAGE_RESULTS, float(lon), float(lat), float(buffer), 
-                annotate=annt, export_all=all, plot_boundary=bdry
-            ) 
-            log.info('DONE RUN IN SINGLE MODE')
-
-        elif mode == 'multi':
-            multi.run(
-                IMAGE_RESULTS, float(lon), float(lat), float(buffer), freq,
-                annotate=annt, export_all=all, plot_boundary=bdry
-            )
-            log.info('DONE RUN IN MULTI MODE')
-
-        end_time = time.time()
-        log.info(f"FINISHED IN {round(end_time-start_time, 2)} SECONDS")
+        else:
+            log.error('Empty/incomplete payload', exc_info=True)
+            raise ValueError('Empty/incomplete payload')
     
 @celery.task
 def test_celery():
