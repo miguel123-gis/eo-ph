@@ -1,15 +1,20 @@
 import pystac
-import rioxarray
-import xarray as xr
 import rioxarray as rxr
+import xarray as xr
 import numpy as np
 import rasterio 
+from datetime import datetime
+from osgeo import gdal
 from rasterio.plot import plotting_extent
 from rasterio.windows import from_bounds
+from rasterio.io import MemoryFile
 from shapely.geometry import box
 from typing import Dict, List, Union, AnyStr
 from pathlib import Path
+from .utils import load_config
 
+PROJECT_DIR = Path(__file__).resolve().parent.parent # eo-ph/
+CONFIG = load_config(PROJECT_DIR / 'config.yaml')
 
 class BaseImage:
     def __init__(
@@ -27,6 +32,7 @@ class BaseImage:
         self._extent = None
         self._rgb_stack = None
         self.kwargs = kwargs
+        self.time_now = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         if subset:
             assets = self.kwargs.get("assets")
@@ -50,7 +56,7 @@ class BaseImage:
         assets = self.image_item.assets
 
         bands = {
-            name: rioxarray.open_rasterio(url.href, chunks=True)
+            name: rxr.open_rasterio(url.href, chunks=True)
             for name, band_num in self.band_nums.items()
             for band, url in assets.items()
             if band_num == band
@@ -61,7 +67,7 @@ class BaseImage:
 
     def get_visual_asset(self) -> xr.DataArray:
         """Get the pre-stacked RGB true color asset from a PySTAC item"""
-        va_array = rioxarray.open_rasterio(self.image_item.assets['visual'].href)
+        va_array = rxr.open_rasterio(self.image_item.assets['visual'].href)
 
         return va_array
     
@@ -197,16 +203,45 @@ class BaseImage:
         # (569533.9820448935, 1444152.1070559227, 589533.9820448935, 1464152.1070559227) vs
         # (569538.9820448935, 1444147.1070559227, 589538.9820448935, 1464147.1070559227)
 
-    
-    def export(self, out_dir, export_rgb=False):
+    def export(self, out_dir, export_rgb=False, to_s3=False):
         out_file = f"{out_dir}/{self.image_item.id}.tif"
         if export_rgb:
             xarrays = {**self.bands, 'true_color': self.true_color}
             for name, xarr in xarrays.items():
                 band_out_file = out_file.replace('.tif', f'_{name}.tif')
-                if not Path(out_file).is_file():
+                if to_s3:
+                    self.to_s3(
+                        raster_xarray=xarr,
+                        s3_path=f"/vsis3/{CONFIG.get('S3_BUCKET')}/{self.time_now}/{self.image_item.id}_{name}.tif",
+                        s3_config=CONFIG
+                    )
+                else:
                     xarr.rio.to_raster(band_out_file, compress="deflate", lock=False, tiled=True)
 
         else:
-            if not Path(out_file).is_file():
+            if to_s3:
+                self.to_s3(
+                    raster_xarray=self.true_color,
+                    s3_path=f"/vsis3/{CONFIG.get('S3_BUCKET')}/{self.time_now}/{self.image_item.id}.tif",
+                    s3_config=CONFIG
+                )
+            else:
                 self.true_color.rio.to_raster(out_file, compress="deflate", lock=False, tiled=True)
+
+    @staticmethod
+    def to_s3(raster_xarray, s3_path:str, s3_config:Dict):
+        gdal.SetConfigOption('AWS_REGION', s3_config.get('AWS_REGION'))
+        gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', s3_config.get('AWS_SECRET_ACCESS_KEY'))
+        gdal.SetConfigOption('AWS_ACCESS_KEY_ID', s3_config.get('AWS_ACCESS_KEY_ID'))
+        gdal.SetConfigOption('CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE', 'YES')
+
+        try:
+            with MemoryFile() as memfile:
+                raster_xarray.rio.to_raster(memfile.name)
+                with memfile.open() as dataset:
+                    profile = dataset.profile
+                    with rasterio.Env():
+                        with rasterio.open(s3_path, 'w', **profile) as dst:
+                            dst.write(dataset.read())
+        except Exception:
+            raise

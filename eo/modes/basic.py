@@ -63,6 +63,7 @@ class BasicMode:
         annotate = self.parameters.get('annotate')
         boundary = self.parameters.get('boundary')
         all = self.parameters.get('all')
+        to_s3 = self.parameters.get('to_s3')
         assets = {**BANDS_SELECTION, 'true_color': 'visual'}
         bbox = get_bbox_from_point(longitude, latitude, 4326, 32651, buffer*1000)
         
@@ -80,7 +81,7 @@ class BasicMode:
         for image in best_images:
             if buffer > 0:
                 log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
-                base_img = BaseImage(
+                base_img = BaseImage( # TODO Insantiate once/before the loop
                         image_item=image, 
                         band_nums=BANDS_SELECTION, 
                         subset=True, 
@@ -103,12 +104,12 @@ class BasicMode:
                     lon=longitude, lat=latitude,
                     plot_bdry=boundary,
                     figsize=FIGSIZE, dpi=DPI
-                )
+                )   
             else:
                 if all:
                     log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
-                    base_img.export(export_rgb=True, out_dir=PROCESSED_IMG_DIR)
+                    base_img.export(export_rgb=True, out_dir=PROCESSED_IMG_DIR, to_s3=to_s3)
                 else:
-                    base_img.export(out_dir=PROCESSED_IMG_DIR)
+                    base_img.export(out_dir=PROCESSED_IMG_DIR, to_s3=to_s3)
         end_time = time.time()
         log.info(f"FINISHED IN {round(end_time-start_time, 2)} SECONDS")

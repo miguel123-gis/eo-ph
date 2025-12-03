@@ -31,3 +31,12 @@ chunk_size: 512
 # Annotation settings
 figure_size: 15
 dpi: 250
+
+# Redis
+redis_host: redis
+
+# AWS
+AWS_REGION: some-region
+AWS_SECRET_ACCESS_KEY: access-key
+AWS_ACCESS_KEY_ID: secret-key
+S3_BUCKET: some-bucket
