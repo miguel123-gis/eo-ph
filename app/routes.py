@@ -1,9 +1,10 @@
 
 from pathlib import Path
 from celery import Celery, result
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_file, redirect, url_for
 from eo.logger import logger
 from eo.modes.basic import BasicMode
+from eo.constants import REQUIRED_PARAMETERS
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -15,20 +16,28 @@ celery = Celery(
 )
 log = logger(PROJECT_DIR / 'logs/eo.log')
 
+
 @app.route('/')
-def hello():
-    test_celery.delay()
+def index():
     return '<h1>Hello, World!</h1>'
 
 @app.route("/download", methods=['GET', 'POST'])
 def download():
     data = request.form.to_dict()
+    log.info(data)
 
     if len(data) > 0:
         log.info('CALLING FROM /download')
-        call_download.delay(data)
+        for param in REQUIRED_PARAMETERS:
+            data.setdefault(param, False)
+        data['to_zip'] = True
+        async_task = call_download.delay(data)
+        out_file_after = async_task.get()
+        # NOTE Is OUT_FILE still None at this point?
+        return send_file(out_file_after, as_attachment=True)
     
-    return render_template('form.html')
+    # TODO Add logger/handling
+    return render_template('form.html') # TODO Redirect to success page e.g. /download/<folder> so I can do return send_file(OUT_FILE, as_attachment=True)
 
 @app.route('/api/download', methods=['GET', 'POST'])
 def api_download():
@@ -51,8 +60,9 @@ def call_download(self, data):
 
             try:
                 basic_mode = BasicMode(data)
-                basic_mode.run()
+                out_file = basic_mode.run()
                 log.info(f"TASK {task_id}: {result.AsyncResult(task_id).state}") # TODO Task state is always pending, see https://stackoverflow.com/questions/27357732/celery-task-always-pending
+                return str(out_file) # Need to stringify due to kombu.exceptions.EncodeError: TypeError('Object of type PosixPath is not JSON serializable')
             except Exception as e:
                 log.error(f"TASK {task_id}: {result.AsyncResult(task_id).state}", exc_info=True)
 
