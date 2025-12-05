@@ -101,12 +101,15 @@
     <input type="text" id="frequency" name="frequency" placeholder="e.g. monthly, quarterly, yearly" required>
 
     <div class="checkbox-group">
+      <!-- TODO Revert once download via S3 is necessary -->
+      <!-- <label><input type="checkbox" name="s3" checked> Get S3 URL</label> --> 
       <label><input type="checkbox" name="annotate"> Annotate</label>
       <label><input type="checkbox" name="all"> All</label>
       <label><input type="checkbox" name="boundary"> Boundary</label>
     </div>
 
     <button type="submit">Run</button>
+    <h1>{{ message }}</h1>
   </form>
 </body>
 </html>
