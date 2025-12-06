@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name localhost;
+    server_name localhost 127.0.0.1;
 
     access_log /eo-ph/logs/ngnix-access.log;
     error_log /eo-ph/logs/ngnix-error.log;
