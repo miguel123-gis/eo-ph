@@ -1,9 +1,9 @@
 server {
     listen 80;
-    server_name localhost 127.0.0.1;
+    server_name easy-satellite.com www.easy-satellite.com 127.0.0.1 localhost;
 
-    access_log /eo-ph/logs/ngnix-access.log;
-    error_log /eo-ph/logs/ngnix-error.log;
+    access_log /eo-ph/logs/nginx-access.log;
+    error_log /eo-ph/logs/nginx-error.log;
 
     location / {
         include proxy_params;

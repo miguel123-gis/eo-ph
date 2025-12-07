@@ -22,7 +22,10 @@ RUN apt-get update && apt-get install -y \
     nginx \
     less \
     procps \
-    redis-tools
+    redis-tools \
+    python3-dev \
+    python3-venv \
+    libaugeas-dev
 
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
