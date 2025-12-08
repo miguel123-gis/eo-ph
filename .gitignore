@@ -11,6 +11,9 @@ data/processed/
 !data/.gitkeep
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+!data/nginx.example
+!data/wsgi.py
+!data/certbot/
 
 venv/
 
