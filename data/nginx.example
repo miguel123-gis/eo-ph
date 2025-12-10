@@ -1,0 +1,12 @@
+server {
+    listen 80;
+    server_name easy-satellite.com www.easy-satellite.com 127.0.0.1 localhost;
+
+    access_log /eo-ph/logs/nginx-access.log;
+    error_log /eo-ph/logs/nginx-error.log;
+
+    location / {
+        include proxy_params;
+        proxy_pass http://127.0.0.1:5001;
+    }
+}

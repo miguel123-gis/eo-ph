@@ -1,7 +1,7 @@
 
 from pathlib import Path
 from celery import Celery, result
-from flask import Flask, request, jsonify, render_template, send_file, redirect, url_for
+from flask import Flask, request, jsonify, render_template, send_file
 from eo.logger import logger
 from eo.modes.basic import BasicMode
 from eo.constants import REQUIRED_PARAMETERS
@@ -33,11 +33,10 @@ def download():
         data['to_zip'] = True
         async_task = call_download.delay(data)
         out_file_after = async_task.get()
-        # NOTE Is OUT_FILE still None at this point?
         return send_file(out_file_after, as_attachment=True)
     
     # TODO Add logger/handling
-    return render_template('form.html') # TODO Redirect to success page e.g. /download/<folder> so I can do return send_file(OUT_FILE, as_attachment=True)
+    return render_template('form.html')
 
 @app.route('/api/download', methods=['GET', 'POST'])
 def api_download():

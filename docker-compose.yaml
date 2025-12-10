@@ -10,12 +10,27 @@ services:
     volumes:
       - ./redis:/data
     command: redis-server
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
   eo-ph:
     container_name: eo-ph
     image: eo-ph:latest
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    expose:
+      - "443"
     ports:
       - "5001:5001"
       - "80:80"
+      - "443:443"
     volumes:
       - ./data/processed:/eo-ph/data/processed
       - ./data/gadm36_PHL_2.gpkg:/eo-ph/data/gadm36_PHL_2.gpkg
@@ -28,15 +43,24 @@ services:
       sh -c "
         ln -s /etc/nginx/sites-available/eo-ph /etc/nginx/sites-enabled;
         /etc/init.d/nginx start;
-        gunicorn --bind 0.0.0.0:5001 --error-logfile /eo-ph/logs/gunicorn-error.log --access-logfile /eo-ph/logs/gunicorn-access.log --workers 4 --timeout 120 wsgi:app;
+        gunicorn --bind 0.0.0.0:5001 --error-logfile /eo-ph/logs/gunicorn-error.log --access-logfile /eo-ph/logs/gunicorn-access.log --workers 4 --timeout 120 --chdir /eo-ph/data wsgi:app;
       "
   celery_worker:  # TODO Create container for flower
     container_name: celery_worker
     image: eo-ph:latest
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
     volumes:
       - ./data/processed:/eo-ph/data/processed
       - ./data/gadm36_PHL_2.gpkg:/eo-ph/data/gadm36_PHL_2.gpkg
       - ./logs:/eo-ph/logs
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/lib/letsencrypt
+      - ./data/certbot/setup.sh:/eo-ph/data/certbot/setup.sh
     ports:
       - "5555:5555"
     command: ["celery", "-A", "app.routes.celery", "worker", "--loglevel=INFO", "--logfile=/eo-ph/logs/celery.log", "-P", "gevent"]
