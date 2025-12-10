@@ -22,7 +22,10 @@ RUN apt-get update && apt-get install -y \
     nginx \
     less \
     procps \
-    redis-tools
+    redis-tools \
+    python3-dev \
+    python3-venv \
+    libaugeas-dev
 
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
@@ -33,4 +36,4 @@ ENV FLASK_APP=api/routes.py
 ENV TZ="Asia/Manila"
 ENV PYTHONPATH=/eo-ph
 
-COPY nginx.example /etc/nginx/sites-available/eo-ph
+COPY data/nginx.example /etc/nginx/sites-available/eo-ph
