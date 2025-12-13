@@ -1,16 +1,18 @@
 import time
+import yaml
 from pathlib import Path
 import numpy as np
+from .. import PROJECT_DIR
 from eo.base_image import BaseImage
 from eo.base_image_collection import BaseImageCollection
 from eo.annotated_image import AnnotatedImage
 from eo.logger import logger
 from eo.image_utils import get_best_image, get_best_images, get_bbox_from_point, search_catalog
-from eo.utils import load_config
 from eo.constants import REQUIRED_PARAMETERS
 
-PROJECT_DIR = Path(__file__).resolve().parent.parent.parent # eo-ph/
-CONFIG = load_config(PROJECT_DIR / 'config.yaml')
+with open(Path(PROJECT_DIR / 'data/config.yaml'), "r") as f:
+    CONFIG = yaml.safe_load(f)
+
 log = logger(PROJECT_DIR / 'logs/eo.log')
 
 DTYPE_MAP = {

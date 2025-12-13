@@ -12,10 +12,7 @@ from rasterio.io import MemoryFile
 from shapely.geometry import box
 from typing import Dict, List, Union, AnyStr
 from pathlib import Path
-from .utils import load_config
 
-PROJECT_DIR = Path(__file__).resolve().parent.parent # eo-ph/
-CONFIG = load_config(PROJECT_DIR / 'config.yaml')
 now = lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
 
 class BaseImage:
@@ -226,10 +223,9 @@ class BaseImage:
                     filename = f"{self.image_item.id}.tif",
                     out_zip=f"{out_dir}/{now()}.zip"
                 )
+                return out_zip
             else:
                 self.true_color.rio.to_raster(out_file, compress="deflate", lock=False, tiled=True)
-
-        return out_zip
 
     @staticmethod
     def to_s3(raster_xarray, s3_path:str, s3_config:Dict): # TODO This will not work with all since I have to create a URL for each of the object

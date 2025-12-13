@@ -1,10 +1,5 @@
-import yaml
 from pathlib import Path
 import geopandas as gpd
-
-def load_config(path):
-    with open(Path(path), "r") as f:
-        return yaml.safe_load(f)
 
 def simplify_datetime(date, compact=False):
     from datetime import datetime
