@@ -4,7 +4,6 @@ import xarray as xr
 import numpy as np
 import rasterio 
 import zipfile
-from datetime import datetime
 from osgeo import gdal
 from rasterio.plot import plotting_extent
 from rasterio.windows import from_bounds
@@ -12,8 +11,6 @@ from rasterio.io import MemoryFile
 from shapely.geometry import box
 from typing import Dict, List, Union, AnyStr
 from pathlib import Path
-
-now = lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
 
 class BaseImage:
     def __init__(
@@ -201,7 +198,8 @@ class BaseImage:
         # (569533.9820448935, 1444152.1070559227, 589533.9820448935, 1464152.1070559227) vs
         # (569538.9820448935, 1444147.1070559227, 589538.9820448935, 1464147.1070559227)
 
-    def export(self, out_dir, export_rgb=False, to_zip=False): # TODO Include payload in zip
+    # TODO Include payload in zip
+    def export(self, out_dir, export_rgb=False, to_zip=False, runtime=None):
         out_file = f"{out_dir}/{self.image_item.id}.tif"
         if export_rgb:
             xarrays = {**self.bands, 'true_color': self.true_color}
@@ -211,7 +209,7 @@ class BaseImage:
                     out_zip = self.to_zip(
                         raster_xarray=xarr,
                         filename = f"{self.image_item.id}_{name}.tif",
-                        out_zip=f"{out_dir}/{now()}.zip"
+                        out_zip=f"{out_dir}/{runtime}.zip"
                     )
                 else:
                     xarr.rio.to_raster(band_out_file, compress="deflate", lock=False, tiled=True)
@@ -221,14 +219,14 @@ class BaseImage:
                 out_zip = self.to_zip(
                     raster_xarray=self.true_color,
                     filename = f"{self.image_item.id}.tif",
-                    out_zip=f"{out_dir}/{now()}.zip"
+                    out_zip=f"{out_dir}/{runtime}.zip"
                 )
                 return out_zip
             else:
                 self.true_color.rio.to_raster(out_file, compress="deflate", lock=False, tiled=True)
 
     @staticmethod
-    def to_s3(raster_xarray, s3_path:str, s3_config:Dict): # TODO This will not work with all since I have to create a URL for each of the object
+    def memrast_to_s3(raster_xarray, s3_path:str, s3_config:Dict): # TODO This will not work with all since I have to create a URL for each of the object
         gdal.SetConfigOption('AWS_REGION', s3_config.get('AWS_REGION'))
         gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', s3_config.get('AWS_SECRET_ACCESS_KEY'))
         gdal.SetConfigOption('AWS_ACCESS_KEY_ID', s3_config.get('AWS_ACCESS_KEY_ID'))
