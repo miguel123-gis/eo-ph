@@ -93,7 +93,7 @@
         .then(data => {
             console.log("Task status:", data);
             
-            if (data.ready) {
+            if (data.ready && data.success) {
                 clearInterval(intervalId); // Stop refreshing
                 window.location.href = downloadUrl; // Refresh page to trigger Flask's send_file()
             }

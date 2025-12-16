@@ -35,7 +35,7 @@ def task_status(task_id):
     result = AsyncResult(task_id)
     return jsonify({
         "ready": result.ready(),
-        "state": result.state,
+        "success": result.state == 'SUCCESS',
         "result": result.get()
     })
 

@@ -201,7 +201,7 @@ class BaseImage:
     # TODO Include payload in zip
     def export(self, out_dir, export_rgb=False, to_zip=False, runtime=None):
         out_file = f"{out_dir}/{self.image_item.id}.tif"
-        if export_rgb:
+        if export_rgb: # Exports Red, Green, Blue, and True Color
             xarrays = {**self.bands, 'true_color': self.true_color}
             for name, xarr in xarrays.items():
                 band_out_file = out_file.replace('.tif', f'_{name}.tif')
@@ -213,6 +213,8 @@ class BaseImage:
                     )
                 else:
                     xarr.rio.to_raster(band_out_file, compress="deflate", lock=False, tiled=True)
+            
+            return out_zip
 
         else:
             if to_zip:
