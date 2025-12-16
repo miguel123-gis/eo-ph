@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sentinel-2 Download Form</title>
+  <title>Download Zip</title>
   <link href="https://fonts.googleapis.com/css2?family=Aerial&display=swap" rel="stylesheet">
   <style>
     body {
@@ -79,36 +79,29 @@
   </style>
 </head>
 <body>
-  <form action="/download" method="POST" enctype="application/x-www-form-urlencoded">
-    <h2>Sentinel-2 Download Form</h2>
+  <!-- TODO Return the payload instead of text-->
+  <h1>Download will start in a moment</h1> 
+  <div id="page-data" data-task-id='{{ task_id | tojson }}'></div>
+  <script>
+    const taskId = JSON.parse(document.getElementById('page-data').dataset.taskId).task_id;
+    const statusUrl = "/status/" + taskId;
+    const downloadUrl = "/download/" + taskId;
 
-    <label for="latitude">Latitude</label>
-    <input type="number" step="any" id="latitude" name="latitude" required>
+    function checkStatus() {
+    fetch(statusUrl)
+        .then(response => response.json())
+        .then(data => {
+            console.log("Task status:", data);
+            
+            if (data.ready && data.success) {
+                clearInterval(intervalId); // Stop refreshing
+                window.location.href = downloadUrl; // Refresh page to trigger Flask's send_file()
+            }
+        })
+        .catch(err => console.error("Polling error:", err));
+    }
 
-    <label for="longitude">Longitude</label>
-    <input type="number" step="any" id="longitude" name="longitude" required>
-
-    <label for="start_date">Start Date</label>
-    <input type="date" id="start_date" name="start_date" required>
-
-    <label for="end_date">End Date</label>
-    <input type="date" id="end_date" name="end_date" required>
-
-    <label for="buffer">Buffer Size (m)</label>
-    <input type="number" id="buffer" name="buffer" required>
-
-    <label for="frequency">Frequency</label>
-    <input type="text" id="frequency" name="frequency" placeholder="e.g. monthly, quarterly, yearly" required>
-
-    <div class="checkbox-group">
-      <!-- TODO Revert once download via S3 is necessary -->
-      <!-- <label><input type="checkbox" name="s3" checked> Get S3 URL</label> --> 
-      <label><input type="checkbox" name="annotate"> Annotate</label>
-      <label><input type="checkbox" name="all"> All</label>
-      <label><input type="checkbox" name="boundary"> Boundary</label>
-    </div>
-
-    <button type="submit">Run</button>
-  </form>
+    const intervalId = setInterval(checkStatus, 2000);
+  </script>
 </body>
 </html>

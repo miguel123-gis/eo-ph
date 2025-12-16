@@ -1,21 +1,8 @@
 import argparse
-from pathlib import Path
+import json
+from . import PROJECT_DIR
 from eo.logger import logger
-from eo.utils import load_config
 from eo.modes.basic import BasicMode
-
-PROJECT_DIR = Path(__file__).resolve().parent.parent
-CONFIG = load_config('config.yaml') # TODO Add handle if config.yaml is not existing
-
-START_DATE = CONFIG['start_date']
-END_DATE = CONFIG['end_date']
-LONGITUDE = float(CONFIG['longitude'])
-LATITUDE = float(CONFIG['latitude'])
-BUFFER = float(CONFIG['buffer_size_meters'])
-FREQUENCY = CONFIG['frequency']
-ANNOTATE = CONFIG['annotate']
-BOUNDARY = CONFIG['boundary']
-ALL = CONFIG['all']
 
 if __name__ == "__main__":
     log = logger(PROJECT_DIR / 'logs/eo.log')
@@ -25,6 +12,8 @@ if __name__ == "__main__":
         description=("Get the best image/s based on XY and date range"),
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
+
+    parser.add_argument("payload_json", help="See sample JSON file in data/")
 
     # For histogram mode
     parser.add_argument("--hist", required=False, type=str)
@@ -44,6 +33,21 @@ if __name__ == "__main__":
     # if hist: 
         # hist.run(bn=bn, tif=tif, lo=lo, up=up, out=out)
 
+    payload = args.payload_json
+    with open(payload, 'r') as f:
+        payload_dict = json.load(f)
+
+    START_DATE = payload_dict['start_date']
+    END_DATE = payload_dict['end_date']
+    LATITUDE = float(payload_dict['latitude'])
+    LONGITUDE = float(payload_dict['longitude'])
+    BUFFER = float(payload_dict['buffer'])
+    FREQUENCY = payload_dict['frequency']
+    ANNOTATE = payload_dict['annotate']
+    BOUNDARY = payload_dict['boundary']
+    ALL = payload_dict['all']
+    TO_ZIP = payload_dict['to_zip']
+
     log.info('CALLING VIA CLI')
     basic_mode = BasicMode({
         "start_date": START_DATE,
@@ -54,6 +58,7 @@ if __name__ == "__main__":
         "frequency": FREQUENCY,
         "annotate": ANNOTATE,
         "boundary": BOUNDARY,
-        "all": ALL
+        "all": ALL,
+        "to_zip": TO_ZIP
     })
     basic_mode.run()

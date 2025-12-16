@@ -1,16 +1,19 @@
 import time
+from datetime import datetime
+import yaml
 from pathlib import Path
 import numpy as np
+from .. import PROJECT_DIR
 from eo.base_image import BaseImage
 from eo.base_image_collection import BaseImageCollection
 from eo.annotated_image import AnnotatedImage
 from eo.logger import logger
 from eo.image_utils import get_best_image, get_best_images, get_bbox_from_point, search_catalog
-from eo.utils import load_config
 from eo.constants import REQUIRED_PARAMETERS
 
-PROJECT_DIR = Path(__file__).resolve().parent.parent.parent # eo-ph/
-CONFIG = load_config(PROJECT_DIR / 'config.yaml')
+with open(Path(PROJECT_DIR / 'data/config.yaml'), "r") as f:
+    CONFIG = yaml.safe_load(f)
+
 log = logger(PROJECT_DIR / 'logs/eo.log')
 
 DTYPE_MAP = {
@@ -51,6 +54,7 @@ class BasicMode:
     def run(self):
         self.check_parameters()
         start_time = time.time()
+        start_time_readable = datetime.fromtimestamp(start_time).strftime("%Y%m%d_%H%M%S")
 
         if len(self.image_selection) == 0:
             log.error('ZERO IMAGES FOUND BASED ON PAYLOAD')
@@ -90,7 +94,7 @@ class BasicMode:
                     )
             else:
                 log.info(f'GETTING ENTIRE IMAGE INTERSECTING XY')
-                base_img = BaseImage(image_item=image, band_nums=BANDS_SELECTION, true_color=True) 
+                base_img = BaseImage(image_item=image, band_nums=BANDS_SELECTION, true_color=True) # TODO Convert to stateless class
                 
             if annotate:
                 log.info('INCLUDING MAP ANNOTATIONS E.G. CAPTURE DATE, CLOUD COVER, ETC.')
@@ -108,9 +112,9 @@ class BasicMode:
             else:
                 if all:
                     log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
-                    out_file = base_img.export(export_rgb=True, out_dir=PROCESSED_IMG_DIR, to_zip=to_zip)
+                    out_file = base_img.export(export_rgb=True, out_dir=PROCESSED_IMG_DIR, to_zip=to_zip, runtime=start_time_readable)
                 else:
-                    out_file = base_img.export(out_dir=PROCESSED_IMG_DIR, to_zip=to_zip)
+                    out_file = base_img.export(out_dir=PROCESSED_IMG_DIR, to_zip=to_zip, runtime=start_time_readable)
         end_time = time.time()
 
         log.info(f'OUT FILE: {out_file}')
