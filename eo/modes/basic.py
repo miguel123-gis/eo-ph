@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 from .. import PROJECT_DIR
 from eo.base_image import BaseImage
-from eo.base_image_collection import BaseImageCollection
+from eo.dataclasses.base_image_collection import BaseImageCollection
 from eo.annotated_image import AnnotatedImage
 from eo.logger import logger
 from eo.image_utils import get_best_image, get_best_images, get_bbox_from_point, search_catalog

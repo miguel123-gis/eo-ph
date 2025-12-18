@@ -13,5 +13,6 @@ REQUIRED_PARAMETERS = [
     'frequency',
     'annotate',
     'boundary',
-    'all'
+    'export_all',
+    'to_zip'
 ]

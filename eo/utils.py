@@ -1,5 +1,5 @@
-from pathlib import Path
 import geopandas as gpd
+from eo.dataclasses import payload
 
 def simplify_datetime(date, compact=False):
     from datetime import datetime
