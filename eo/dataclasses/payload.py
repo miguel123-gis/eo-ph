@@ -8,7 +8,7 @@ class Payload:
     latitude: float
     longitude: float
     buffer: float
-    frequency: str
+    frequency: str | bool
     annotate: bool
     boundary: bool
     export_all: bool
@@ -31,7 +31,9 @@ class InvalidFrequencyError(Exception):
         return self.message
 
 def validate_payload(data):
-    if data.get('frequency') and data.get('frequency') not in FREQUENCY_MAP.keys():
+    if data.get('frequency') == '':
+        data['frequency'] = False
+    elif data.get('frequency') not in FREQUENCY_MAP.keys():
         raise InvalidFrequencyError(message='Invalid frequency')
     
     for key in data:

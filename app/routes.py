@@ -43,7 +43,7 @@ def task_status(task_id):
 def download():
     data = request.form.to_dict()
 
-    if len(data) > 0: # TODO Add this to validate_payload()
+    if len(data) > 0:
         log.info(f"PAYLOAD: {data}")
         validated = validate_payload(data)
 
