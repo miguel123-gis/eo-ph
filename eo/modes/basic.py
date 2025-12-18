@@ -108,7 +108,8 @@ class BasicMode:
                     lon=longitude, lat=latitude,
                     plot_bdry=boundary,
                     figsize=FIGSIZE, dpi=DPI
-                )   
+                )
+                out_file = None
             else:
                 if all:
                     log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
