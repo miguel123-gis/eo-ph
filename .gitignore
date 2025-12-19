@@ -15,7 +15,9 @@ data/processed/
 !data/wsgi.py
 !data/certbot/
 !/data/*.sh
+!/data/*.gpkg
 venv/
+nb_venv/
 
 eo.log
 

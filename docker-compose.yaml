@@ -61,7 +61,7 @@ services:
       - ./data/gadm36_PHL_2.gpkg:/eo-ph/data/gadm36_PHL_2.gpkg
       - ./logs:/eo-ph/logs
       - ./data/setup_certs.sh:/eo-ph/data/setup_certs.sh
-      - ./data/letsencrypt:/var/letsencrypt
+      - ./data/letsencrypt:/etc/letsencrypt
     ports:
       - "5555:5555"
     command: ["celery", "-A", "app.routes.celery", "worker", "--loglevel=INFO", "--logfile=/eo-ph/logs/celery.log", "-P", "gevent"]
