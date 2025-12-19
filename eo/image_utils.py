@@ -7,7 +7,7 @@ import geopandas as gpd
 import duckdb
 from pathlib import Path
 from shapely.geometry import box
-from eo.base_image_collection import BaseImageCollection
+from eo.dataclasses.base_image_collection import BaseImageCollection
 from eo.constants import FREQUENCY_MAP
 
 def search_catalog(imgcol: BaseImageCollection) -> pystac.item.Item:

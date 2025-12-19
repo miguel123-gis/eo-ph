@@ -1,4 +1,6 @@
 Download Sentinel-2A/2B images per month/quarter/year via Planetary Computer API (for Philippines only)
+
+https://easy-satellite.com/download
 ---
 Created this simple downloader since I'm studying Remote Sensing and wanted to make downloading and clipping images faster.
 
@@ -8,9 +10,11 @@ Annotated images (not georeferenced, in PNG) of Payatas, Quezon City from 2015-2
 True color TIFs of Davao Bypass Road, Davao City from 2015-2025
 ![payatas](misc/davao.gif)
 
-## Usage
+## Usage in local
+
+### Docker setup
 1. Clone repo
-2. Build images - `docker compose build`
+2. Build images - `docker build -t eo-ph .`
 3. Start containers - `docker compose up --detach`
 4. You should see 3 containers - `docker ps` like
 ```
