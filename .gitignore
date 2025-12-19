@@ -14,7 +14,7 @@ data/processed/
 !data/nginx.example
 !data/wsgi.py
 !data/certbot/
-
+!/data/*.sh
 venv/
 
 eo.log
