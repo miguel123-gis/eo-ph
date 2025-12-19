@@ -95,17 +95,17 @@
     <input type="date" id="end_date" name="end_date" required>
 
     <label for="buffer">Buffer Size (m)</label>
-    <input type="number" id="buffer" name="buffer" required>
+    <input type="number" id="buffer" name="buffer" placeholder="Maximum of 15m" required>
 
     <label for="frequency">Frequency</label>
-    <input type="text" id="frequency" name="frequency" placeholder="e.g. monthly, quarterly, yearly" required>
+    <input type="text" id="frequency" name="frequency" placeholder="e.g. monthly, quarterly, yearly">
 
     <div class="checkbox-group">
       <!-- TODO Revert once download via S3 is necessary -->
       <!-- <label><input type="checkbox" name="s3" checked> Get S3 URL</label> --> 
       <label><input type="checkbox" name="annotate"> Annotate</label>
-      <label><input type="checkbox" name="all"> All</label>
       <label><input type="checkbox" name="boundary"> Boundary</label>
+      <label><input type="checkbox" name="export_all"> Export all bands</label>
     </div>
 
     <button type="submit">Run</button>

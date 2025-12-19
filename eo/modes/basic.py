@@ -5,11 +5,12 @@ from pathlib import Path
 import numpy as np
 from .. import PROJECT_DIR
 from eo.base_image import BaseImage
-from eo.base_image_collection import BaseImageCollection
+from eo.dataclasses.base_image_collection import BaseImageCollection
 from eo.annotated_image import AnnotatedImage
 from eo.logger import logger
 from eo.image_utils import get_best_image, get_best_images, get_bbox_from_point, search_catalog
 from eo.constants import REQUIRED_PARAMETERS
+from eo.base_image import BaseImage
 
 with open(Path(PROJECT_DIR / 'data/config.yaml'), "r") as f:
     CONFIG = yaml.safe_load(f)
@@ -103,12 +104,13 @@ class BasicMode:
                     log.info('PLOTTING BOUNDARIES IN EXPORTS')
                     
                 annt_img = AnnotatedImage(base_image=base_img)
-                annt_img.annotate(
+                out_file = annt_img.annotate(
                     boundaries=PH_BDRYS, out_dir=PROCESSED_IMG_DIR, 
                     lon=longitude, lat=latitude,
                     plot_bdry=boundary,
-                    figsize=FIGSIZE, dpi=DPI
-                )   
+                    figsize=FIGSIZE, dpi=DPI,
+                    out_zip=f"{PROCESSED_IMG_DIR}/{start_time_readable}.zip"
+                )
             else:
                 if all:
                     log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')

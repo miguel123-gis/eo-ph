@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import geopandas as gpd
 import rioxarray as rxr
+import zipfile
+import io
+from pathlib import Path
 from eo.base_image import BaseImage
 from eo.utils import simplify_datetime, list_intersecting_municipalities
 
@@ -37,6 +40,7 @@ class AnnotatedImage:
         figsize = kwargs.get('figsize')
         plot_boundary = kwargs.get('plot_bdry')
         dpi = kwargs.get('dpi')
+        out_zip = kwargs.get('out_zip')
 
         # Reorder the array for pyplot
         image = self.true_color.values
@@ -69,11 +73,25 @@ class AnnotatedImage:
         tile_id = self.image_properties['s2:mgrs_tile']
         alt_image_id = f"{capture_date_compact}_{platform}_{tile_id}"
 
+        out_file = f'{out_dir}/{alt_image_id}.png'
         plt.axis('off')
         plt.figtext(0.13, 0.09, f'From {platform} with image ID of {self.image_id}', ha='left', va='bottom', fontname='Helvetica', fontsize=12)
         plt.figtext(0.13, 0.07, f'Captured on {capture_date} with {int(cloud_cover)}% cloud cover', ha='left', va='bottom', fontname='Helvetica', fontsize=12)
         plt.figtext(0.13, 0.05, f'Shows {munis} in {province} with center at {map_center}', ha='left', va='bottom', fontname='Helvetica', fontsize=12)
-        plt.savefig(f'{out_dir}/{alt_image_id}.png', dpi=dpi, bbox_inches='tight')
+
+        if out_zip:
+            if Path(out_zip).exists:
+                mode = 'a'
+            else:
+                mode = 'w'
+            with zipfile.ZipFile(out_zip, mode=mode, compression=zipfile.ZIP_DEFLATED) as zf:
+                buf = io.BytesIO()
+                plt.savefig(buf, dpi=dpi, bbox_inches='tight')
+                plt.close()
+                zf.writestr(f'{alt_image_id}.png', buf.getvalue())
+            out_file = Path(out_zip).resolve()
+
+        return out_file
 
         
     @staticmethod

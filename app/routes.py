@@ -1,11 +1,11 @@
-import time
+import json
 from pathlib import Path
 from celery import Celery
 from celery.result import AsyncResult
-from flask import Flask, request, jsonify, render_template, redirect, url_for, send_file, copy_current_request_context, g
+from flask import Flask, request, jsonify, render_template, redirect, url_for, send_file
 from eo.logger import logger
 from eo.modes.basic import BasicMode
-from eo.constants import REQUIRED_PARAMETERS
+from eo.dataclasses.payload import validate_payload, InvalidPayloadError, InvalidFrequencyError
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -44,29 +44,39 @@ def download():
     data = request.form.to_dict()
 
     if len(data) > 0:
-        log.info(data)
+        log.info(f"PAYLOAD: {data}")
+        validated = validate_payload(data)
+
         log.info('CALLING FROM /download')
-        for param in REQUIRED_PARAMETERS:
-            data.setdefault(param, False)
-        data['to_zip'] = True
-        task = call_download.delay(data)
+        task = call_download.delay(validated)
         task_id = task.task_id
         return redirect(url_for('download_result', task_id=task_id))
-    
+   
     # TODO Add logger/handling
     return render_template('form.html')
 
 @app.route('/api/download', methods=['GET', 'POST'])
 def api_download():
     data = request.get_json(silent=True)
-    
+
     if len(data) > 0:
+        log.info(f"PAYLOAD: {data}")
+        validated = validate_payload(data)
+
         log.info('CALLING FROM /api/download')
-        async_task = call_download.delay(data)
+        async_task = call_download.delay(validated)
         return jsonify({"status": "ok", "received": data, "async_id": async_task.id})
     
     if data is None:
         return jsonify({"status": "error", "message": 'No data received', "async_id": async_task.id})
+
+@app.errorhandler(InvalidPayloadError)
+@app.errorhandler(InvalidFrequencyError)
+def handle_payload_errors(e):
+    response = jsonify({"status": "error", "message": e.message})
+    response.status_code = 400
+    log.error(e.message)
+    return response
     
 @celery.task(bind=True)
 def call_download(self, data):
