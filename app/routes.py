@@ -46,6 +46,7 @@ def download():
     if len(data) > 0:
         log.info(f"PAYLOAD: {data}")
         validated = validate_payload(data)
+        log.info(f"VALIDATED: {validated}")
 
         log.info('CALLING FROM /download')
         task = call_download.delay(validated)

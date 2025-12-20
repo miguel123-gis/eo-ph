@@ -43,6 +43,8 @@ def validate_payload(data):
         if data.get(key) == '':
             raise InvalidPayloadError(message='Invalid payload: blank value/s')
         
+    _on_as_bool = lambda value: True if value == 'on' else value
+        
     return asdict(Payload(
         start_date = data.get('start_date'),
         end_date = data.get('end_date'),
@@ -50,8 +52,9 @@ def validate_payload(data):
         longitude = data.get('longitude'),
         buffer = data.get('buffer'),
         frequency = data.get('frequency', False),
-        annotate = data.get('annotate', False),
-        boundary = data.get('boundary', False),
-        export_all = data.get('all', False),
+        # Checkboxers have a value of 'on' if checked
+        annotate = _on_as_bool(data.get('annotate', False)),
+        boundary = _on_as_bool(data.get('boundary', False)),
+        export_all = _on_as_bool(data.get('export_all', False)),
         to_zip = data.get('to_zip', True)
     ))
