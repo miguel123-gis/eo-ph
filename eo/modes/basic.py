@@ -67,7 +67,7 @@ class BasicMode:
         frequency = self.parameters.get('frequency')
         annotate = self.parameters.get('annotate')
         boundary = self.parameters.get('boundary')
-        all = self.parameters.get('all')
+        export_all = self.parameters.get('export_all')
         to_zip = self.parameters.get('to_zip')
         assets = {**BANDS_SELECTION, 'true_color': 'visual'}
         bbox = get_bbox_from_point(longitude, latitude, 4326, 32651, buffer*1000)
@@ -112,7 +112,7 @@ class BasicMode:
                     out_zip=f"{PROCESSED_IMG_DIR}/{start_time_readable}.zip"
                 )
             else:
-                if all:
+                if export_all:
                     log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
                     out_file = base_img.export(export_rgb=True, out_dir=PROCESSED_IMG_DIR, to_zip=to_zip, runtime=start_time_readable)
                 else:

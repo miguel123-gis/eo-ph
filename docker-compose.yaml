@@ -36,6 +36,8 @@ services:
       - ./data/processed:/eo-ph/data/processed
       - ./data/gadm36_PHL_2.gpkg:/eo-ph/data/gadm36_PHL_2.gpkg
       - ./logs:/eo-ph/logs
+      - ./data/setup_certs.sh:/eo-ph/data/setup_certs.sh
+      - ./data/letsencrypt:/etc/letsencrypt
     extra_hosts:
       - "host.docker.internal:host-gateway"
     stdin_open: true    # equivalent to -i
@@ -60,9 +62,6 @@ services:
       - ./data/processed:/eo-ph/data/processed
       - ./data/gadm36_PHL_2.gpkg:/eo-ph/data/gadm36_PHL_2.gpkg
       - ./logs:/eo-ph/logs
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/lib/letsencrypt
-      - ./data/certbot/setup.sh:/eo-ph/data/certbot/setup.sh
     ports:
       - "5555:5555"
     command: ["celery", "-A", "app.routes.celery", "worker", "--loglevel=INFO", "--logfile=/eo-ph/logs/celery.log", "-P", "gevent"]
