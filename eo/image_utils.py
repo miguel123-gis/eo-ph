@@ -1,14 +1,14 @@
 import pystac
 import pystac_client
 import planetary_computer
-import xarray as xr
 import pandas as pd
-import geopandas as gpd
 import duckdb
+import requests
 from pathlib import Path
 from shapely.geometry import box
 from eo.dataclasses.base_image_collection import BaseImageCollection
 from eo.constants import FREQUENCY_MAP
+from typing import List
 
 def search_catalog(imgcol: BaseImageCollection) -> pystac.item.Item:
     """Search a collection e.g. Sentintel 2 based on XY and date range."""
@@ -98,3 +98,11 @@ def get_bbox_from_point(x:float, y:float, source_crs:int, target_crs:int, bbox_s
     bounds = conn.sql(query).fetchall()[0]
 
     return box(bounds[0], bounds[1], bounds[2], bounds[3])
+
+# NOTE See https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-2-l2a for reference
+def get_collection_bands(collection_name) -> List:
+    """Returns a list of bands available for a collection"""
+    response = requests.get(f'https://planetarycomputer.microsoft.com/api/stac/v1/collections/{collection_name}')
+    response.raise_for_status()
+    item_assets = response.json()['item_assets']
+    return [band for band in item_assets if item_assets[band].get('eo:bands')]

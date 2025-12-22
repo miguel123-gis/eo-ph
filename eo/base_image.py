@@ -16,64 +16,41 @@ class BaseImage:
     def __init__(
             self, 
             image_item: pystac.Item,
-            band_nums: Dict = None,
-            true_color = False,
-            subset = False,
+            band_list: List,
             **kwargs
         ):
         self.image_item = image_item
-        self.band_nums = band_nums
-        self.bands = None
+        self.band_list = band_list
+        self.individual_bands_arr = None
         self.true_color = None
         self._extent = None
         self._rgb_stack = None
         self.kwargs = kwargs
 
-        if subset:
-            assets = self.kwargs.get("assets")
-            bbox = self.kwargs.get("bbox")
+        bbox = self.kwargs.get("bbox")
 
-            if assets is None or bbox is None:
-                raise ValueError("subset=True requires assets and bbox kwargs.")
-            
-            self.clip(assets=assets, bbox=bbox)
-
-        else:
-            if band_nums is not None:
-                self.bands = self.get_individual_bands()
-
-            if true_color:
-                self.true_color = self.get_visual_asset()
+        if self.band_list is None or bbox is None:
+            raise ValueError("subset=True requires list of bands and bbox kwargs.")
+        
+        self.clip(band_list, bbox)
 
 
     def get_individual_bands(self) -> Dict:
         """Get the individual bands (e.g. Red, Green, and Blue) from the selected image."""
-        assets = self.image_item.assets
-
-        bands = {
-            name: rxr.open_rasterio(url.href, chunks=True)
-            for name, band_num in self.band_nums.items()
-            for band, url in assets.items()
-            if band_num == band
+        return {
+            band_id: rxr.open_rasterio(url.href, chunks=True)
+            for band_id in self.band_list
+            for band, url in self.image_item.assets.items()
+            if band_id == band
         }
-
-        return bands
-    
-
-    def get_visual_asset(self) -> xr.DataArray:
-        """Get the pre-stacked RGB true color asset from a PySTAC item"""
-        va_array = rxr.open_rasterio(self.image_item.assets['visual'].href)
-
-        return va_array
     
     
-    def clip(self, assets:list, bbox):
+    def clip(self, band_list:list, bbox):
         """Clips the PySTAC item's RGB and visual assets with a shapely box"""
-        rgb_assets = list(self.band_nums.keys())
-        self.bands = {}
+        self.individual_bands_arr = {}
 
-        for name, asset in assets.items():
-            cog = self.image_item.assets[asset].href
+        for band in band_list:
+            cog = self.image_item.assets[band].href
 
             with rasterio.open(cog) as src:
                 window = from_bounds(*bbox.bounds, transform=src.transform)
@@ -107,11 +84,8 @@ class BaseImage:
                     }
                 )
 
-                if name in rgb_assets:
-                    self.bands[name] = da
-                
-                else: 
-                    self.true_color = da
+                self.individual_bands_arr[band] = da
+        self.true_color = self.individual_bands_arr.get('visual')
 
 
     @staticmethod
@@ -133,9 +107,9 @@ class BaseImage:
     
     def stretch_contrast(self) -> "BaseImage":
         """Removes the outliers in a band and stretch the remaining values to increase contrast"""
-        self.bands = {
+        self.individual_bands_arr = {
             name: self._stretch_contrast(band, self.lower_percentile, self.upper_percentile, self.no_data_value)
-            for name, band in self.bands.items()
+            for name, band in self.individual_bands_arr.items()
         }
 
         return self
@@ -144,7 +118,7 @@ class BaseImage:
     def stack_bands(self, band_order:List) -> "BaseImage":
         """Stack individual bands based on order."""
         try:
-            bands_to_stack = [self.bands[band] for band in band_order]
+            bands_to_stack = [self.individual_bands_arr[band] for band in band_order]
         except KeyError as e:
             raise ValueError(f"Band {e} not found in provided bands.") from e
         
@@ -169,7 +143,7 @@ class BaseImage:
         gamma_corrected = self._rgb_stack ** (1/gamma)
         asuint8 = (gamma_corrected.clip(0,1) * max_val).astype(type)
         ordered = asuint8.assign_coords(band=[1, 2, 3])
-        ordered.rio.write_crs(self.bands['red'].rio.crs, inplace=False)
+        ordered.rio.write_crs(self.individual_bands_arr['red'].rio.crs, inplace=False)
         chunked = ordered.chunk({'band': -1, 'y': chunk, 'x': chunk})
         self._rgb_stack = chunked
 
@@ -202,8 +176,7 @@ class BaseImage:
     def export(self, out_dir, export_rgb=False, to_zip=False, runtime=None):
         out_file = f"{out_dir}/{self.image_item.id}.tif"
         if export_rgb: # Exports Red, Green, Blue, and True Color
-            xarrays = {**self.bands, 'true_color': self.true_color}
-            for name, xarr in xarrays.items():
+            for name, xarr in self.individual_bands_arr.items():
                 band_out_file = out_file.replace('.tif', f'_{name}.tif')
                 if to_zip:
                     out_zip = self.to_zip(
@@ -212,7 +185,8 @@ class BaseImage:
                         out_zip=f"{out_dir}/{runtime}.zip"
                     )
                 else:
-                    xarr.rio.to_raster(band_out_file, compress="deflate", lock=False, tiled=True)
+                    if name == 'visual':
+                        xarr.rio.to_raster(band_out_file, compress="deflate", lock=False, tiled=True)
             
             return out_zip
 

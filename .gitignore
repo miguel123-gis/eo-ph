@@ -1,6 +1,5 @@
 *.code-workspace
 *.pyc
-config.yaml
 
 scratch/
 !scratch/.gitkeep
@@ -16,6 +15,7 @@ data/processed/
 !data/certbot/
 !/data/*.sh
 !/data/*.gpkg
+!/data/config.yaml
 venv/
 nb_venv/
 

@@ -24,7 +24,7 @@ class AnnotatedImage:
         ):
         self.image_id = base_image.image_item.id
         self.image_properties = base_image.image_item.properties
-        self.bands = base_image.bands
+        self.bands = base_image.individual_bands_arr
         self.true_color = base_image.true_color
         self.extent = base_image.extent
         self.lower_percentile = lower
