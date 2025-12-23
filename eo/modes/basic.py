@@ -8,9 +8,9 @@ from eo.base_image import BaseImage
 from eo.dataclasses.base_image_collection import BaseImageCollection
 from eo.annotated_image import AnnotatedImage
 from eo.logger import logger
-from eo.image_utils import get_best_image, get_best_images, get_bbox_from_point, search_catalog
+from eo.image_utils import (get_best_image, get_best_images, get_bbox_from_point, 
+                            search_catalog, get_collection_bands)
 from eo.constants import REQUIRED_PARAMETERS
-from eo.base_image import BaseImage
 
 with open(Path(PROJECT_DIR / 'data/config.yaml'), "r") as f:
     CONFIG = yaml.safe_load(f)
@@ -24,29 +24,28 @@ DTYPE_MAP = {
 }
 
 PROCESSED_IMG_DIR = CONFIG['processed_images_directory']
-BANDS_SELECTION = CONFIG['bands']
 PH_BDRYS = CONFIG['ph_boundaries_gpkg']
 FIGSIZE = CONFIG['figure_size']
 DPI = CONFIG['dpi']
+S2A = CONFIG['collections']['s2a']
 
 class BasicMode:
     def __init__(self, parameters):
         self.parameters = parameters
 
-        self.image_selection = None
-        if self.image_selection is None:
-            self.image_selection = self._image_selection()
-
-    def _image_selection(self):
-        return search_catalog(
-            BaseImageCollection(
-                start_date = self.parameters.get('start_date'),
-                end_date = self.parameters.get('end_date'),
-                lon = self.parameters.get('longitude'),
-                lat = self.parameters.get('latitude'),
-                collection = 'sentinel-2-l2a'
-            )
+        self.image_collection = BaseImageCollection(
+            start_date = self.parameters.get('start_date'),
+            end_date = self.parameters.get('end_date'),
+            lon = self.parameters.get('longitude'),
+            lat = self.parameters.get('latitude'),
+            collection = S2A
         )
+
+        self.available_bands = get_collection_bands(S2A)
+
+    @property
+    def image_selection(self):
+        return search_catalog(self.image_collection)
 
     def check_parameters(self):
         if not all([rp in self.parameters for rp in REQUIRED_PARAMETERS]):
@@ -69,7 +68,6 @@ class BasicMode:
         boundary = self.parameters.get('boundary')
         export_all = self.parameters.get('export_all')
         to_zip = self.parameters.get('to_zip')
-        assets = {**BANDS_SELECTION, 'true_color': 'visual'}
         bbox = get_bbox_from_point(longitude, latitude, 4326, 32651, buffer*1000)
         
         log.info(f'PAYLOAD: {self.parameters}')
@@ -82,20 +80,17 @@ class BasicMode:
             log.info('RUNNING IN SINGLE MODE')
             best_images = [get_best_image(self.image_selection)] # Put in list to be compatible with logic downstream
 
-
         for image in best_images:
             if buffer > 0:
                 log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
-                base_img = BaseImage( # TODO Insantiate once/before the loop
+                base_img = BaseImage( # TODO Instantiate once/before the loop
                         image_item=image, 
-                        band_nums=BANDS_SELECTION, 
-                        subset=True, 
-                        assets=assets, 
+                        band_list=self.available_bands, 
                         bbox=bbox
                     )
-            else:
+            else: # TODO Add max buffer range
                 log.info(f'GETTING ENTIRE IMAGE INTERSECTING XY')
-                base_img = BaseImage(image_item=image, band_nums=BANDS_SELECTION, true_color=True) # TODO Convert to stateless class
+                base_img = BaseImage(image_item=image, band_nums=self.available_bands) # TODO Convert to stateless class
                 
             if annotate:
                 log.info('INCLUDING MAP ANNOTATIONS E.G. CAPTURE DATE, CLOUD COVER, ETC.')
@@ -113,7 +108,7 @@ class BasicMode:
                 )
             else:
                 if export_all:
-                    log.info('GETTING THE RED, GREEN, BLUE AND TRUE-COLOR IMAGES')
+                    log.info('GETTING ALL BANDS AND TRUE COLOR IMAGE')
                     out_file = base_img.export(export_rgb=True, out_dir=PROCESSED_IMG_DIR, to_zip=to_zip, runtime=start_time_readable)
                 else:
                     out_file = base_img.export(out_dir=PROCESSED_IMG_DIR, to_zip=to_zip, runtime=start_time_readable)

@@ -1,0 +1,10 @@
+# Directories
+processed_images_directory: data/processed
+ph_boundaries_gpkg: data/gadm36_PHL_2.gpkg
+
+collections:
+  s2a: sentinel-2-l2a
+  
+# Annotation settings
+figure_size: 15
+dpi: 250
