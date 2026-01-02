@@ -4,78 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sentinel-2 Download Form</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css')}}">
   <link href="https://fonts.googleapis.com/css2?family=Aerial&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Aerial', sans-serif;
-      background: #f8fafc;
-      color: #1e293b;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    form {
-      background: #fff;
-      padding: 2rem 3rem;
-      border-radius: 1rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-
-    label {
-      display: block;
-      margin-top: 1rem;
-      font-weight: 600;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 0.6rem;
-      margin-top: 0.4rem;
-      border: 1px solid #cbd5e1;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-    }
-
-    .checkbox-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.8rem;
-      margin-top: 1rem;
-    }
-
-    .checkbox-group label {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-weight: normal;
-    }
-
-    button {
-      margin-top: 1.5rem;
-      width: 100%;
-      padding: 0.8rem;
-      border: none;
-      background: #2563eb;
-      color: #fff;
-      font-size: 1rem;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    button:hover {
-      background: #1e40af;
-    }
   </style>
 </head>
 <body>
@@ -100,15 +31,21 @@
     <label for="frequency">Frequency</label>
     <input type="text" id="frequency" name="frequency" placeholder="e.g. monthly, quarterly, yearly">
 
-    <div class="checkbox-group">
-      <!-- TODO Revert once download via S3 is necessary -->
-      <!-- <label><input type="checkbox" name="s3" checked> Get S3 URL</label> --> 
-      <label><input type="checkbox" name="annotate"> Annotate</label>
-      <label><input type="checkbox" name="boundary"> Boundary</label>
-      <label><input type="checkbox" name="export_all"> Export all bands</label>
+    <div id="modeSelection">
+      <label><input type="radio" name="mode" id="modeButtonA" value="annotate">Annotate</label>
+      <label><input type="radio" name="mode" id="modeButtonE" value="export_all">Export all bands</label>
+      <label><input type="radio" name="mode" id="modeButtonR" value="cloudless">Remove clouds</label>
     </div>
 
+    <div style="border-bottom: 1px solid gray;"></div>
+    
+    <div class="checkbox-annotate">
+      <label><input type="checkbox" name="boundary">Boundary</label>
+    </div>
+    
     <button type="submit">Run</button>
   </form>
+
+  <script src="{{ url_for('static', filename='js/form.js')}}"></script>
 </body>
 </html>

@@ -1,17 +1,21 @@
 from dataclasses import dataclass, fields, asdict
-from eo.constants import REQUIRED_PARAMETERS, FREQUENCY_MAP
+from eo.constants import VALID_MODES, FREQUENCY_MAP
 
 @dataclass(frozen=True)
 class Payload:
-    start_date: str
-    end_date: str
     latitude: float
     longitude: float
+    start_date: str
+    end_date: str
     buffer: float
     frequency: str | bool
+    # Modes
     annotate: bool
-    boundary: bool
     export_all: bool
+    cloudless: bool
+    # Sub-mode for annotate
+    boundary: bool
+    # Always True
     to_zip: bool = True
 
 required_parameters = [field.name for field in fields(Payload)]
@@ -30,11 +34,32 @@ class InvalidFrequencyError(Exception):
     def __str__(self):
         return self.message
 
+class InvalidModeError(Exception): 
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
 def validate_payload(data):
     if data.get('frequency') == '':
         data['frequency'] = False
     elif data.get('frequency') not in FREQUENCY_MAP.keys():
         raise InvalidFrequencyError(message='Invalid frequency')
+
+    
+    # Edited the payload
+    mode_value = data.get('mode')
+    del data['mode']
+
+    if mode_value not in VALID_MODES:
+        raise InvalidModeError(message='Invalid mode')
+    
+    for m in VALID_MODES:
+        if mode_value == m:
+            data[m] = True
+        else:
+            data[m] = False
     
     for key in data:
         if key not in required_parameters:
@@ -56,5 +81,6 @@ def validate_payload(data):
         annotate = _on_as_bool(data.get('annotate', False)),
         boundary = _on_as_bool(data.get('boundary', False)),
         export_all = _on_as_bool(data.get('export_all', False)),
-        to_zip = data.get('to_zip', True)
+        to_zip = data.get('to_zip', True),
+        cloudless = data.get('cloudless', False)
     ))

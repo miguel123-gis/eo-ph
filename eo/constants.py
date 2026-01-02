@@ -1,3 +1,5 @@
+VALID_MODES = ['annotate', 'export_all', 'cloudless']
+
 FREQUENCY_MAP = {
     'monthly': 'ME',
     'quarterly': 'QE',
