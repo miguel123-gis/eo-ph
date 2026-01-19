@@ -22,7 +22,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 756M
+          memory: 768M
         reservations:
           memory: 512M
     expose:

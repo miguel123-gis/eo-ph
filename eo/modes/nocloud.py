@@ -141,7 +141,7 @@ class NoCloudMode(BasicMode):
                 log.info(f'GETTING ENTIRE IMAGE INTERSECTING XY')
                 base_img = BaseImage(image_item=image, band_nums=self.available_bands) # TODO Convert to stateless class
             
-            # Get SCL asset
+            # Get SCL asset and increase resolution of SCL to 10x10m
             clipped_scl = self._upscale_and_clip(
                 raster=base_img.image_item.assets['SCL'].to_dict()['href'],
                 upscale_factor=UPSCALE_FACTOR
@@ -153,7 +153,6 @@ class NoCloudMode(BasicMode):
 
             to_xarray = lambda arr: DataArray(arr, dims=('band', 'y', 'x')).astype(np.uint8)
             
-            # Increase resolution of SCL to 10x10m
             no_clouds = self._remove_cloud(
                 scl_arr=to_xarray(clipped_scl),
                 rgb_arr=to_xarray(clipped_visual)
