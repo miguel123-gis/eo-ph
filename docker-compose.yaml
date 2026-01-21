@@ -18,7 +18,9 @@ services:
           memory: 256M
   eo-ph:
     container_name: eo-ph
-    image: eo-ph:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     deploy:
       resources:
         limits:
@@ -32,6 +34,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      - ./eo:/eo-ph/eo
       - ./data/config.yaml:/eo-ph/data/config.yaml
       - ./data/processed:/eo-ph/data/processed
       - ./data/gadm36_PHL_2.gpkg:/eo-ph/data/gadm36_PHL_2.gpkg
@@ -50,7 +53,9 @@ services:
       "
   celery_worker:  # TODO Create container for flower
     container_name: celery_worker
-    image: eo-ph:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     deploy:
       resources:
         limits:

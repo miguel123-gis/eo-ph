@@ -2,6 +2,7 @@ import yaml
 import time
 import rasterio
 import numpy as np
+import xarray as xr
 from shapely.geometry import polygon
 from datetime import datetime
 from pathlib import Path
@@ -96,14 +97,14 @@ class NoCloudMode(BasicMode):
 
                 with memfile.open() as temp_ds_r:
                     return self._clip(temp_ds_r, self.bbox)[0]
-
-    def _remove_cloud(self, scl_arr: DataArray, rgb_arr: DataArray):
-        # TODO Make sure both are reshaped like band, y, x
-        scl_mask = scl_arr.where(np.isin(scl_arr, [0, 1, 2, 4, 5, 6]), other=100).astype(np.uint8) # Replace cloud pixels with 100
+    
+    def _replace_cloud(self, target_scl_arr: DataArray, target_rgb_arr: DataArray, source_rgb_arr: DataArray):
+        scl_mask = target_scl_arr.where(np.isin(target_scl_arr, [0, 1, 2, 4, 5, 6]), other=100).astype(np.uint8) # Replace cloud pixels with 100
         not_cloud = scl_mask != 100 # Use SCL mask to set values in visual to 0 across all bands
         not_cloud_3d = np.repeat(not_cloud, 3, 0).transpose('band', 'y', 'x').to_numpy() # Convert is_cloud mask from 2d to 3d with 3 channels
-        rgb_nocloud = where(not_cloud_3d, rgb_arr, 0) # Replace pixels with 0 in visual
-        return rgb_nocloud
+        rgb_nocloud = where(not_cloud_3d, target_rgb_arr, 0) # Replace pixels with 0 in visual
+        is_cloud = target_rgb_arr == 0
+        return where(is_cloud, source_rgb_arr, target_rgb_arr)
 
     # TODO Override run()
     def run(self):
@@ -129,39 +130,49 @@ class NoCloudMode(BasicMode):
             log.info('RUNNING IN SINGLE MODE')
             best_images = [get_best_image(self.image_selection)] # Put in list to be compatible with logic downstream
 
-        for image in best_images:
-            if buffer > 0:
-                log.info(f'ONLY GETTING AREA {buffer} METERS FROM XY')
-                base_img = BaseImage( # TODO Instantiate once/before the loop
-                        image_item=image, 
-                        band_list=self.available_bands, 
-                        bbox=self.bbox
-                    )
-            else: # TODO Add max buffer range
-                log.info(f'GETTING ENTIRE IMAGE INTERSECTING XY')
-                base_img = BaseImage(image_item=image, band_nums=self.available_bands) # TODO Convert to stateless class
+        # Compile the images here
+        rasters = {
+            image.datetime.strftime("%Y%m%d"): {
+                'visual': image.assets.get('visual').href,
+                'scl': image.assets.get('SCL').href
+            }
+            for image in best_images
+        }
+        order = sorted(list(rasters.keys()), reverse=True)
+        latest_raster = rasters.get(order[0])
+
+        # Remove the cloud pixels in latest image
+        latest_vis_arr = xr.open_dataarray(rasters.get(order[0]).get('visual')).astype(np.uint8)
+        latest_scl_arr = self._upscale_and_clip(latest_raster.get('scl'), UPSCALE_FACTOR)
+        previous_vis_arr = xr.open_dataarray(rasters.get(order[1]).get('visual'))
+        latest_vis_replaced = self._replace_cloud(
+            latest_scl_arr,
+            latest_vis_arr,
+            previous_vis_arr, 
+        )
+
+        # Start of pixel replacement from previous images
+        # At first pass, replaced is same as the target raster. 
+        replaced = latest_vis_replaced
+
+        for key in order[1:]:
+            vis = xr.open_dataarray(rasters.get(key).get('visual')).astype(np.uint8)
+            scl = self._upscale_and_clip(rasters.get(key).get('scl'), UPSCALE_FACTOR).astype(np.uint8)
+            no_clouds = self.latest_vis_replaced(scl, vis) # For this current period, remove the cloud pixels
             
-            # Get SCL asset and increase resolution of SCL to 10x10m
-            clipped_scl = self._upscale_and_clip(
-                raster=base_img.image_item.assets['SCL'].to_dict()['href'],
-                upscale_factor=UPSCALE_FACTOR
+            # At first pass, the latest raster's cloud pixel is replaced by the next raster.
+            # Then, in subsequent passes, pixels that were replaced already will not be replaced.
+            replaced = xr.where(
+                (replaced == 0) & (for_replacement == True),
+                no_clouds,
+                replaced
             )
 
-            # Get visual asset
-            with rasterio.open(base_img.image_item.assets['visual'].to_dict()['href']) as src:
-                clipped_visual, clipped_profile = self._clip(src, self.bbox)
-
-            to_xarray = lambda arr: DataArray(arr, dims=('band', 'y', 'x')).astype(np.uint8)
-            
-            no_clouds = self._remove_cloud(
-                scl_arr=to_xarray(clipped_scl),
-                rgb_arr=to_xarray(clipped_visual)
-            )
-
-            # Replace true_color object then export
-            base_img.true_color = no_clouds
-            out_file = base_img.export(out_dir=PROCESSED_IMG_DIR, to_zip=to_zip, runtime=start_time_readable)
-
+            for_replacement = replaced == 0 # If not replaced, then still 0 -> still True/for replacement
+        
+        # At this point, the latest TIF has all its cloud pixels replaced
+        out_file = f'{PROCESSED_IMG_DIR}/{latest_raster}_cloudreplaced.tif'
+        replaced.rio.to_raster(out_file)
         end_time = time.time()
         log.info(f'OUT FILE: {out_file}')
         log.info(f"FINISHED IN {round(end_time-start_time, 2)} SECONDS")
