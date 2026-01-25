@@ -1,4 +1,4 @@
-VALID_MODES = ['annotate', 'export_all', 'cloudless']
+VALID_MODES = ['regular', 'annotate', 'export_all', 'cloudless']
 
 FREQUENCY_MAP = {
     'monthly': 'ME',
@@ -12,9 +12,7 @@ REQUIRED_PARAMETERS = [
     'latitude',
     'longitude',
     'buffer',
-    'frequency',
-    'annotate',
+    'mode',
     'boundary',
-    'export_all',
     'to_zip'
 ]

@@ -64,9 +64,9 @@ class BasicMode:
         longitude = self.parameters.get('longitude')
         buffer = float(self.parameters.get('buffer'))
         frequency = self.parameters.get('frequency')
-        annotate = self.parameters.get('annotate')
+        annotate = self.parameters.get('mode') == 'annotate'
         boundary = self.parameters.get('boundary')
-        export_all = self.parameters.get('export_all')
+        export_all = self.parameters.get('mode') == 'export_all'
         to_zip = self.parameters.get('to_zip')
         bbox = get_bbox_from_point(longitude, latitude, 4326, 32651, buffer*1000)
         

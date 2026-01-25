@@ -34,7 +34,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./eo:/eo-ph/eo
+      - ./app:/eo-ph/app # Frontend + routing
+      - ./eo:/eo-ph/eo  # Backend
       - ./data/config.yaml:/eo-ph/data/config.yaml
       - ./data/processed:/eo-ph/data/processed
       - ./data/gadm36_PHL_2.gpkg:/eo-ph/data/gadm36_PHL_2.gpkg
@@ -63,6 +64,8 @@ services:
         reservations:
           memory: 256M
     volumes:
+      - ./app:/eo-ph/app # Frontend + routing
+      - ./eo:/eo-ph/eo # Backend logic
       - ./data/config.yaml:/eo-ph/data/config.yaml
       - ./data/processed:/eo-ph/data/processed
       - ./data/gadm36_PHL_2.gpkg:/eo-ph/data/gadm36_PHL_2.gpkg

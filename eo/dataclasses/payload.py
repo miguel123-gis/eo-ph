@@ -10,9 +10,7 @@ class Payload:
     buffer: float
     frequency: str | bool
     # Modes
-    annotate: bool
-    export_all: bool
-    cloudless: bool
+    mode: str 
     # Sub-mode for annotate
     boundary: bool
     # Always True
@@ -47,19 +45,9 @@ def validate_payload(data):
     elif data.get('frequency') not in FREQUENCY_MAP.keys():
         raise InvalidFrequencyError(message='Invalid frequency')
 
-    
-    # Edited the payload
-    mode_value = data.get('mode')
-    del data['mode']
-
-    if mode_value not in VALID_MODES:
+    mode = data.get('mode')
+    if data.get('mode') not in VALID_MODES:
         raise InvalidModeError(message='Invalid mode')
-    
-    for m in VALID_MODES:
-        if mode_value == m:
-            data[m] = True
-        else:
-            data[m] = False
     
     for key in data:
         if key not in required_parameters:
@@ -77,10 +65,7 @@ def validate_payload(data):
         longitude = data.get('longitude'),
         buffer = data.get('buffer'),
         frequency = data.get('frequency', False),
-        # Checkboxers have a value of 'on' if checked
-        annotate = _on_as_bool(data.get('annotate', False)),
+        mode = data.get('mode'),
         boundary = _on_as_bool(data.get('boundary', False)),
-        export_all = _on_as_bool(data.get('export_all', False)),
         to_zip = data.get('to_zip', True),
-        cloudless = data.get('cloudless', False)
     ))

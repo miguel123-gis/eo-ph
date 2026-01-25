@@ -110,15 +110,12 @@ class NoCloudMode(BasicMode):
     def run(self):
         self.check_parameters()
         start_time = time.time()
-        start_time_readable = datetime.fromtimestamp(start_time).strftime("%Y%m%d_%H%M%S")
 
         if len(self.image_selection) == 0:
             log.error('ZERO IMAGES FOUND BASED ON PAYLOAD')
             raise ValueError('ZERO IMAGES FOUND BASED ON PAYLOAD')
         
-        buffer = float(self.parameters.get('buffer'))
         frequency = self.parameters.get('frequency')
-        to_zip = self.parameters.get('to_zip')
         
         log.info(f'PAYLOAD: {self.parameters}')
         log.info(f'GOT {len(self.image_selection)} IMAGES TO SELECT FROM')

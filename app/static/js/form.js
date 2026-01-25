@@ -1,8 +1,10 @@
 // Listen to mode buttons
-const modeButtonA = document.getElementById("modeButtonA")
-const modeButtonE = document.getElementById("modeButtonE")
-const modeButtonR = document.getElementById("modeButtonR")
-const allButtons = [modeButtonA, modeButtonE, modeButtonR]
+const allButtons = [
+    document.getElementById("btnRegMd"),
+    document.getElementById("btnAnntMd"),
+    document.getElementById("btnExpAllMd"),
+    document.getElementById("btnCloudlessMd")
+]
 
 function listenToButton(buttonId) {
     buttonId.addEventListener("click", function(event) {

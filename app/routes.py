@@ -47,7 +47,6 @@ def download():
     if len(data) > 0:
         log.info(f"PAYLOAD: {data}")
         validated = validate_payload(data)
-        log.info(f"VALIDATED: {validated}")
 
         log.info('CALLING FROM /download')
         task = call_download.delay(validated)
@@ -80,12 +79,12 @@ def call_download(self, data):
                 task_id = self.request.id
                 log.info(f"TASK ID: {task_id}")
 
-                if data['cloudless']:
+                if data.get('mode') == 'cloudless':
                     log.info('RUNNING IN CLOUDLESS MODE')
                     nocloud_mode = NoCloudMode(data)
                     out_file = nocloud_mode.run()
                     return str(out_file)
-                else:
+                else: # Covers regular, annotate, and export all modes
                     try:
                         log.info('RUNNING IN BASIC MODE')
                         basic_mode = BasicMode(data)
