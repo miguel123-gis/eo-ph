@@ -3,16 +3,11 @@ import time
 import rasterio
 import numpy as np
 import xarray as xr
-from shapely.geometry import polygon
-from datetime import datetime
 from pathlib import Path
 from rasterio.windows import from_bounds
 from rasterio.enums import Resampling
-from rasterio import MemoryFile
-from xarray import DataArray, where
+from xarray import where
 
-from eo.base_image import BaseImage
-from eo.annotated_image import AnnotatedImage
 from eo.logger import logger
 from eo.image_utils import get_bbox_from_point, get_best_images, get_best_image
 from .basic import BasicMode
@@ -50,61 +45,65 @@ class NoCloudMode(BasicMode):
         )
 
     @staticmethod
-    def _clip(active_raster: rasterio.DatasetReader, bbox:polygon.Polygon):
-        profile = active_raster.profile
-        window = from_bounds(*bbox.bounds, transform=active_raster.transform)
-        win_transform = active_raster.window_transform(window)
-                    
-        profile.update({
-            'height': window.height,
-            'width': window.width,
-            'transform': win_transform
-        })
-        
-        return active_raster.read(window=window), profile
-
-
-    def _upscale_and_clip(self, raster, upscale_factor) -> np.ndarray:
+    def _clip(raster, bbox) -> np.ndarray:
         with rasterio.open(raster) as src:
-            hires = src.read(
-                out_shape=(
-                    src.count,
-                    int(src.height * upscale_factor),
-                    int(src.width * upscale_factor)
-                ),
+            window = from_bounds(*bbox.bounds, transform=src.transform)
+            src.profile.update({
+                'height': window.height,
+                'width': window.width,
+                'transform': src.window_transform(window)
+            })
+            
+            return xr.DataArray(
+                src.read(window=window),
+                dims=("band", "y", "x"),
+                attrs={
+                    "transform": src.window_transform(window),
+                    "crs": src.crs.to_string() if src.crs else None,
+                    "nodata": src.nodata
+                }
+            ).rio.write_crs(src.crs.to_string())
+        
+    @staticmethod
+    def _upscale_and_clip(raster, bbox, upscale_factor) -> np.ndarray:
+        with rasterio.open(raster) as src:
+            window = from_bounds(*bbox.bounds, transform=src.transform)
+            out_height = int(window.height * upscale_factor)
+            out_width = int(window.width * upscale_factor)
+            out_shape = (src.count, out_height, out_width)
+
+            clipped_and_upscaled = src.read(
+                window=window,
+                out_shape=out_shape,
                 resampling=Resampling.bilinear
             )
 
-            transform = src.transform * src.transform.scale(
-                (src.width / hires.shape[-1]),
-                (src.height / hires.shape[-2])
+            new_res = tuple(map(lambda x: x/upscale_factor, src.res))
+            new_transform = src.window_transform(window) * src.window_transform(window).scale(
+                window.width/out_width,
+                window.height/out_height
             )
 
-            profile = {
-                'driver': 'GTiff',
-                'dtype': hires.dtype.name,
-                'count': 1,
-                'width': hires.shape[2],
-                'height': hires.shape[1],
-                'crs': src.crs,
-                'transform': transform,
-            }
-
-            # Put in a temporary file
-            with MemoryFile() as memfile:
-                with memfile.open(**profile) as temp_ds_w:
-                    temp_ds_w.write(hires[0], 1) # Writes per band
-
-                with memfile.open() as temp_ds_r:
-                    return self._clip(temp_ds_r, self.bbox)[0]
+            return xr.DataArray(
+                clipped_and_upscaled,
+                dims=("band", "y", "x"),
+                attrs={
+                    "transform": new_transform,
+                    "crs": src.crs.to_string() if src.crs else None,
+                    "res": new_res,
+                    "nodata": src.nodata
+                }
+            ).rio.write_crs(src.crs.to_string())
     
-    def _replace_cloud(self, target_scl_arr: DataArray, target_rgb_arr: DataArray, source_rgb_arr: DataArray):
-        scl_mask = target_scl_arr.where(np.isin(target_scl_arr, [0, 1, 2, 4, 5, 6]), other=100).astype(np.uint8) # Replace cloud pixels with 100
+    @staticmethod
+    def _remove_cloud(scl_arr: xr.DataArray, rgb_arr: xr.DataArray):
+    # TODO Make sure both are reshaped like band, y, x
+        scl_mask = scl_arr.where(np.isin(scl_arr, [0, 1, 2, 4, 5, 6]), other=100).astype(np.uint8) # Replace cloud pixels with 100
         not_cloud = scl_mask != 100 # Use SCL mask to set values in visual to 0 across all bands
         not_cloud_3d = np.repeat(not_cloud, 3, 0).transpose('band', 'y', 'x').to_numpy() # Convert is_cloud mask from 2d to 3d with 3 channels
-        rgb_nocloud = where(not_cloud_3d, target_rgb_arr, 0) # Replace pixels with 0 in visual
-        is_cloud = target_rgb_arr == 0
-        return where(is_cloud, source_rgb_arr, target_rgb_arr)
+        rgb_nocloud = where(not_cloud_3d, rgb_arr, 0) # Replace pixels with 0 in visual
+        return rgb_nocloud
+
 
     # TODO Override run()
     def run(self):
@@ -123,6 +122,7 @@ class NoCloudMode(BasicMode):
         if frequency: # Get image ID per month/quarter/etc
             log.info('RUNNING IN MULTI MODE')
             best_images = get_best_images(self.image_selection, frequency=frequency)
+            log.info(f"BEST IMAGES: {len(best_images)}")
         else: # Get single image ID
             log.info('RUNNING IN SINGLE MODE')
             best_images = [get_best_image(self.image_selection)] # Put in list to be compatible with logic downstream
@@ -130,48 +130,50 @@ class NoCloudMode(BasicMode):
         # Compile the images here
         rasters = {
             image.datetime.strftime("%Y%m%d"): {
+                'id': image.id,
                 'visual': image.assets.get('visual').href,
                 'scl': image.assets.get('SCL').href
             }
             for image in best_images
         }
+        log.info(f"RASTERS: {len(rasters.keys())}")
         order = sorted(list(rasters.keys()), reverse=True)
         latest_raster = rasters.get(order[0])
+        log.info(f"GOT {len(order)} RASTERS: {', '.join(order)}")
 
         # Remove the cloud pixels in latest image
-        latest_vis_arr = xr.open_dataarray(rasters.get(order[0]).get('visual')).astype(np.uint8)
-        latest_scl_arr = self._upscale_and_clip(latest_raster.get('scl'), UPSCALE_FACTOR)
-        previous_vis_arr = xr.open_dataarray(rasters.get(order[1]).get('visual'))
-        latest_vis_replaced = self._replace_cloud(
-            latest_scl_arr,
-            latest_vis_arr,
-            previous_vis_arr, 
-        )
+        latest_vis_arr = self._clip(latest_raster.get('visual'), self.bbox)
+        latest_scl_arr = self._upscale_and_clip(latest_raster.get('scl'), self.bbox, upscale_factor=2)
+        latest_vis_nc = self._remove_cloud(latest_scl_arr, latest_vis_arr) # Target raster
+        for_replacement = latest_vis_nc == 0
 
         # Start of pixel replacement from previous images
         # At first pass, replaced is same as the target raster. 
-        replaced = latest_vis_replaced
+        replaced = latest_vis_nc
 
         for key in order[1:]:
-            vis = xr.open_dataarray(rasters.get(key).get('visual')).astype(np.uint8)
-            scl = self._upscale_and_clip(rasters.get(key).get('scl'), UPSCALE_FACTOR).astype(np.uint8)
-            no_clouds = self.latest_vis_replaced(scl, vis) # For this current period, remove the cloud pixels
+            log.info(f"PROCESSING {key}")
+            vis = self._clip(rasters.get(key).get('visual'), self.bbox).astype(np.uint8)
+            scl = self._upscale_and_clip(rasters.get(key).get('scl'), self.bbox, upscale_factor=2).astype(np.uint8)
+            no_clouds = self._remove_cloud(scl, vis) # For this current period, remove the cloud pixels
             
             # At first pass, the latest raster's cloud pixel is replaced by the next raster.
             # Then, in subsequent passes, pixels that were replaced already will not be replaced.
-            replaced = xr.where(
+            replaced = no_clouds.where(
                 (replaced == 0) & (for_replacement == True),
-                no_clouds,
-                replaced
+                replaced,
             )
 
             for_replacement = replaced == 0 # If not replaced, then still 0 -> still True/for replacement
         
         # At this point, the latest TIF has all its cloud pixels replaced
-        out_file = f'{PROCESSED_IMG_DIR}/{latest_raster}_cloudreplaced.tif'
+        out_file = f"{PROCESSED_IMG_DIR}/{latest_raster.get('id')}_cloudreplaced.tif"
+        replaced.rio.write_crs('EPSG:32651')
+        replaced.rio.write_transform(latest_vis_arr.attrs['transform'], inplace=True)
         replaced.rio.to_raster(out_file)
+        
         end_time = time.time()
         log.info(f'OUT FILE: {out_file}')
         log.info(f"FINISHED IN {round(end_time-start_time, 2)} SECONDS")
 
-        return out_file
+        return Path(out_file).resolve()
