@@ -105,4 +105,8 @@ def get_collection_bands(collection_name) -> List:
     response = requests.get(f'https://planetarycomputer.microsoft.com/api/stac/v1/collections/{collection_name}')
     response.raise_for_status()
     item_assets = response.json()['item_assets']
-    return [band for band in item_assets if item_assets[band].get('eo:bands')]
+    return [
+        band for band in item_assets 
+        if item_assets[band].get('eo:bands') # For regular bands
+        or band == 'SCL'
+    ]
