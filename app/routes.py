@@ -1,11 +1,12 @@
-import json
+import sys
 from pathlib import Path
 from celery import Celery
 from celery.result import AsyncResult
 from flask import Flask, request, jsonify, render_template, redirect, url_for, send_file
 from eo.logger import logger
 from eo.modes.basic import BasicMode
-from eo.dataclasses.payload import validate_payload, InvalidPayloadError, InvalidFrequencyError
+from eo.modes.nocloud import NoCloudMode
+from eo.dataclasses.payload import validate_payload, InvalidPayloadError, InvalidFrequencyError, InvalidModeError
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -46,7 +47,6 @@ def download():
     if len(data) > 0:
         log.info(f"PAYLOAD: {data}")
         validated = validate_payload(data)
-        log.info(f"VALIDATED: {validated}")
 
         log.info('CALLING FROM /download')
         task = call_download.delay(validated)
@@ -70,14 +70,6 @@ def api_download():
     
     if data is None:
         return jsonify({"status": "error", "message": 'No data received', "async_id": async_task.id})
-
-@app.errorhandler(InvalidPayloadError)
-@app.errorhandler(InvalidFrequencyError)
-def handle_payload_errors(e):
-    response = jsonify({"status": "error", "message": e.message})
-    response.status_code = 400
-    log.error(e.message)
-    return response
     
 @celery.task(bind=True)
 def call_download(self, data):
@@ -87,16 +79,32 @@ def call_download(self, data):
                 task_id = self.request.id
                 log.info(f"TASK ID: {task_id}")
 
-                try:
-                    basic_mode = BasicMode(data)
-                    out_file = basic_mode.run()
+                if data.get('mode') == 'cloudless':
+                    log.info('RUNNING IN CLOUDLESS MODE')
+                    nocloud_mode = NoCloudMode(data)
+                    out_file = nocloud_mode.run()
                     return str(out_file)
-                except Exception as e:
-                    log.error(f"TASK {task_id}: {AsyncResult(task_id).state}", exc_info=True)
+                else: # Covers regular, annotate, and export all modes
+                    try:
+                        log.info('RUNNING IN BASIC MODE')
+                        basic_mode = BasicMode(data)
+                        out_file = basic_mode.run()
+                        return str(out_file)
+                    except Exception as e:
+                        log.error(f"TASK {task_id}: {AsyncResult(task_id).state}", exc_info=True)
 
             else:
                 log.error('Empty/incomplete payload', exc_info=True)
                 raise ValueError('Empty/incomplete payload')
+            
+@app.errorhandler(InvalidPayloadError)
+@app.errorhandler(InvalidFrequencyError)
+@app.errorhandler(InvalidModeError)
+def handle_payload_errors(e):
+    response = jsonify({"status": "error", "message": e.message})
+    response.status_code = 400
+    log.error(e.message)
+    return response
     
 @celery.task
 def test_celery():
