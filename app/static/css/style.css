@@ -1,0 +1,28 @@
+/* --- CLASSIC BLOG THEME --- */
+
+body {
+    /* Serif fonts give that classic "written" feel */
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #ffffff;
+    color: #111;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6; /* Improves reading for blocks of text */
+}
+
+.main-container {
+    padding: 0px 50px 0px 50px; /* Internal spacing */
+}
+
+.form-container {
+    padding: 0px 50px 0px 50px; /* Internal spacing */
+    display: block;
+}
+
+
+/* The Classic Header */
+header {
+    font-size: 15px;
+    border-bottom: 1px solid; /* Thick classic divider line */
+    margin: 0px 40px 0px 40px;
+}

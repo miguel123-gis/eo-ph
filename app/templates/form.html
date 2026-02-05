@@ -3,33 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sentinel-2 Download Form</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css')}}">
+  <title>Easy Satellite Download Form </title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}">
   <link href="https://fonts.googleapis.com/css2?family=Aerial&display=swap" rel="stylesheet">
   <style>
   </style>
 </head>
+<header>
+  <h1>Easy Satellite Download Form</h1>
+</header>
 <body>
-  <form action="/download" method="POST" enctype="application/x-www-form-urlencoded">
-    <h2>Sentinel-2 Download Form</h2>
+  <form class="form-container" action="/download" method="POST" enctype="application/x-www-form-urlencoded">
+    <p>Read <a href="{{ url_for('index') }}">here</a> for guidance on parameters below</p>
+    <div>
+      <label for="latitude">Latitude</label>
+      <input type="number" step="any" id="latitude" name="latitude" required>
+    </div>
 
-    <label for="latitude">Latitude</label>
-    <input type="number" step="any" id="latitude" name="latitude" required>
+    <div>
+      <label for="longitude">Longitude</label>
+      <input type="number" step="any" id="longitude" name="longitude" required>
+    </div>  
 
-    <label for="longitude">Longitude</label>
-    <input type="number" step="any" id="longitude" name="longitude" required>
+    <div>
+      <label for="start_date">Start Date</label>
+      <input type="date" id="start_date" name="start_date" required>
+    </div>
 
-    <label for="start_date">Start Date</label>
-    <input type="date" id="start_date" name="start_date" required>
+    <div>
+      <label for="end_date">End Date</label>
+      <input type="date" id="end_date" name="end_date" required>
+    </div>
 
-    <label for="end_date">End Date</label>
-    <input type="date" id="end_date" name="end_date" required>
+    <div>
+      <label for="buffer">Buffer Size (m)</label>
+      <input type="number" id="buffer" name="buffer" placeholder="Maximum of 15m" required>
+    </div>
 
-    <label for="buffer">Buffer Size (m)</label>
-    <input type="number" id="buffer" name="buffer" placeholder="Maximum of 15m" required>
-
-    <label for="frequency">Frequency</label>
-    <input type="text" id="frequency" name="frequency" placeholder="e.g. monthly, quarterly, yearly">
+    <div>
+      <label for="frequency">Frequency</label>
+      <input type="text" id="frequency" name="frequency" placeholder="e.g. monthly, quarterly, yearly">
+    </div>
 
     <div id="modeSelection">
       <label>Mode</label>
@@ -39,13 +53,13 @@
       <label style="font-weight: normal;"><input type="radio" name="mode" id="btnCloudlessMd" value="cloudless">Remove clouds</label>
     </div>
 
+    <div class="checkbox-annotate">
+      <label><input type="checkbox" name="boundary">Add boundaries (for Annotate Mode)</label>
+    </div>
+
     <div style="border-bottom: 1px solid gray;"></div>
     
-    <div class="checkbox-annotate">
-      <label><input type="checkbox" name="boundary">Boundary</label>
-    </div>
-    
-    <button type="submit">Run</button>
+    <button type="submit">Request and download</button>
   </form>
 
   <script src="{{ url_for('static', filename='js/form.js')}}"></script>
