@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}">
+  <title>Easy Satellite</title>
+</head>
+<header>
+  <h1>Easy Satellite</h1>
+</header>
+<body>
+  <div class="main-container">
+    <p><a href="{{ url_for('download') }}">easy-satellite.com/download</a> is an easy way to download Sentinel-2 images in the Philippines.</p>
+    <h2>Parameters</h2>
+    <p>
+      Latitude - in WGS84 e.g. 8.465630088400024<br>
+      Longitude - in WGS84 e.g. 124.64176985865824<br>
+      Start date - in YYYY-MM-DD e.g. 2024-01-01<br>
+      End date - in YYYY-MM-DD e.g. 2024-03-30<br>
+      Buffer - distance in meters that will buffer the point and serve as the clip box<br>
+      Frequency - either monthly, quarterly, or yearly<br>
+      Mode - either regular, annotate, export_all or cloudless
+    </p>
+
+    <h3>Modes</h3>
+    <p>
+      Regular - Given a date range, get the image per month, quarter, etc. with the least cloud cover.<br><br>
+
+      Disclaimer: The cloud cover is calculated per Sentinel-2 tile. So, in this tile, some areas may still have clouds.<br><br>
+
+      Annotate - Same as regular but will add information. Output images are not georeferenced.<br><br>
+
+      Export all - Same as regular but will export the individual bands and the true color composite.<br><br>
+
+      Cloudless - Given a date range, get the latest image and replace its cloud pixels with the next most recent image and so on. Output is a single image only.<br><br>
+    </p>
+  </div>
+</body>
+</html>

@@ -18,9 +18,7 @@ services:
           memory: 256M
   eo-ph:
     container_name: eo-ph
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: eo-ph:latest
     deploy:
       resources:
         limits:
@@ -54,9 +52,7 @@ services:
       "
   celery_worker:  # TODO Create container for flower
     container_name: celery_worker
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: eo-ph:latest
     deploy:
       resources:
         limits:
