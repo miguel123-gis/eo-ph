@@ -21,7 +21,7 @@ log = logger(PROJECT_DIR / 'logs/eo.log')
 
 @app.route('/')
 def index():
-    return '<h1>Hello, World!</h1>'
+    return render_template('home.html')
 
 @app.route('/download/<task_id>', methods=['GET'])
 def download_result(task_id):
